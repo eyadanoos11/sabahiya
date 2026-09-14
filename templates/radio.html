@@ -63,37 +63,8 @@
         </div>
 
         <h2 class="section-title">🇸🇾 الإذاعات السورية</h2>
-        <div class="stations-grid">
-            <div class="station-card" onclick="playStation('https://radiodamascus.ortas.live/RDimshq/RDimshqAudioLive/playlist.m3u8', 'إذاعة دمشق', this)">
-                <div class="station-icon">📻</div>
-                <div class="station-name">إذاعة دمشق</div>
-                <div class="station-desc">95.0 FM</div>
-            </div>
-            <div class="station-card" onclick="playStation('http://radioshamfm.grtvstream.com:2199/tunein/shamfm.pls', 'شام FM', this)">
-                <div class="station-icon">🎼</div>
-                <div class="station-name">شام FM</div>
-                <div class="station-desc">92.3 دمشق</div>
-            </div>
-            <div class="station-card" onclick="playStation('http://82.137.248.20:1935/RSyriana/RSyrianaLive/playlist.m3u8', 'راديو سوريا (سوريانا)', this)">
-                <div class="station-icon">🇸🇾</div>
-                <div class="station-name">راديو سوريا (سوريانا)</div>
-                <div class="station-desc">بث مباشر</div>
-            </div>
-            <div class="station-card" onclick="playStation('http://82.137.248.20:1935/RShabab/RShababLive/playlist.m3u8', 'صوت الشباب', this)">
-                <div class="station-icon">🎤</div>
-                <div class="station-name">صوت الشباب</div>
-                <div class="station-desc">RTV Syria</div>
-            </div>
-            <div class="station-card" onclick="playStation('http://82.137.248.20:1935/RKarma/RKarmaLive/playlist.m3u8', 'راديو الكرامة', this)">
-                <div class="station-icon">🎵</div>
-                <div class="station-name">راديو الكرامة</div>
-                <div class="station-desc">بث مباشر</div>
-            </div>
-            <div class="station-card" onclick="playStation('http://82.137.248.20:1935/RZenobia/RZenobiaLive/playlist.m3u8', 'راديو زينوبيا', this)">
-                <div class="station-icon">🏛️</div>
-                <div class="station-name">راديو زينوبيا</div>
-                <div class="station-desc">بث مباشر</div>
-            </div>
+        <div class="stations-grid" id="syrianRadiosGrid">
+            <p style="text-align:center; color:#d4af37; grid-column: 1/-1;">⏳ جاري تحميل الإذاعات...</p>
         </div>
 
         <h2 class="section-title">📖 الإذاعات الدينية</h2>
@@ -125,6 +96,35 @@
         </div>
     </div>
     <script>
+        async function loadSyrianRadios() {
+            const grid = document.getElementById('syrianRadiosGrid');
+            try {
+                // محاولة جلب الإذاعات من API
+                const response = await fetch('/api/syrian_radios');
+                const radios = await response.json();
+                
+                if (!radios || radios.length === 0) {
+                    grid.innerHTML = '<p style="text-align:center; color:#ff9800; grid-column: 1/-1;">⚠️ لا توجد إذاعات متاحة حالياً. حاول تحديث الصفحة.</p>';
+                    return;
+                }
+                
+                grid.innerHTML = '';
+                radios.forEach(radio => {
+                    const card = document.createElement('div');
+                    card.className = 'station-card';
+                    card.onclick = () => playStation(radio.url, radio.name, card);
+                    const icon = radio.favicon ? '<img src="' + radio.favicon + '" style="width:40px;height:40px;border-radius:8px;" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'📻\'">' : '📻';
+                    card.innerHTML = '<div class="station-icon">' + icon + '</div><div class="station-name">' + radio.name + '</div><div class="station-desc">' + (radio.tags ? radio.tags.substring(0, 30) : 'بث مباشر') + '</div>';
+                    grid.appendChild(card);
+                });
+            } catch (e) {
+                console.error('خطأ في تحميل الإذاعات:', e);
+                grid.innerHTML = '<p style="text-align:center; color:#ff9800; grid-column: 1/-1;">⚠️ تعذر تحميل الإذاعات. تحقق من اتصالك بالإنترنت.</p>';
+            }
+        }
+        
+        window.addEventListener('load', loadSyrianRadios);
+
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('show');

@@ -312,6 +312,57 @@ async def radio_page(request: Request):
         return RedirectResponse("/login", status_code=303)
     users = load_users()
     user = users.get(request.session["user"], {})
-    return templates.TemplateResponse(request=request, name="radio.html", context={"user": user})
+    syrian_radios = get_syrian_radios()
+    return templates.TemplateResponse(request=request, name="radio.html", context={"user": user, "syrian_radios": syrian_radios})
+
+
+import requests as req_lib
+
+SYRIAN_RADIOS_CACHE = "syrian_radios.json"
+
+def get_syrian_radios():
+    """جلب الإذاعات السورية من radio-browser.info API مع تخزين مؤقت"""
+    servers = [
+        "https://de1.api.radio-browser.info",
+        "https://nl1.api.radio-browser.info",
+        "https://at1.api.radio-browser.info",
+        "https://api.radio-browser.info"
+    ]
+    for server in servers:
+        try:
+            url = f"{server}/json/stations/bycountrycodeexact/SY"
+            response = req_lib.get(url, timeout=15, headers={"User-Agent": "SabahiyaRadio/1.0"})
+            if response.status_code == 200:
+                stations = response.json()
+                valid = []
+                for s in stations:
+                    if s.get("url_resolved") and s.get("name"):
+                        valid.append({
+                            "name": s["name"],
+                            "url": s["url_resolved"],
+                            "favicon": s.get("favicon", ""),
+                            "tags": s.get("tags", "")
+                        })
+                # حفظ نسخة مؤقتة
+                with open(SYRIAN_RADIOS_CACHE, "w", encoding="utf-8") as f:
+                    import json as json_mod
+                    json_mod.dump(valid, f, ensure_ascii=False, indent=2)
+                return valid
+        except Exception as e:
+            print(f"فشل الاتصال بـ {server}: {e}")
+            continue
+    
+    # إذا فشل كل شيء، قراءة من النسخة المخزنة
+    import os as os_mod
+    if os_mod.path.exists(SYRIAN_RADIOS_CACHE):
+        with open(SYRIAN_RADIOS_CACHE, "r", encoding="utf-8") as f:
+            import json as json_mod
+            return json_mod.load(f)
+    return []
+
+@app.get("/api/syrian_radios")
+async def api_syrian_radios():
+    """API لجلب الإذاعات السورية"""
+    return get_syrian_radios()
 
 uvicorn.run(app, host="0.0.0.0", port=port)
