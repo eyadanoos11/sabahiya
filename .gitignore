@@ -1,0 +1,9 @@
+.env
+users.json
+posts.json
+static/uploads/
+static/outputs/
+__pycache__/
+*.pyc
+*.save
+*.bak

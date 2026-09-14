@@ -1,0 +1,214 @@
+from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from starlette.middleware.sessions import SessionMiddleware
+import cv2
+import numpy as np
+from PIL import Image
+import io
+import os
+import uuid
+import json
+import hashlib
+import re
+
+app = FastAPI(title="سباهية - معاينة الرخام")
+templates = Jinja2Templates(directory="templates")
+app.add_middleware(SessionMiddleware, secret_key="سباهية_سري_2024_آمن")
+
+os.makedirs("static", exist_ok=True)
+os.makedirs("textures", exist_ok=True)
+os.makedirs("uploads", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/textures", StaticFiles(directory="textures"), name="textures")
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+METADATA_FILE = "textures/metadata.json"
+USERS_FILE = "users.json"
+
+def load_users():
+    if os.path.exists(USERS_FILE):
+        with open(USERS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+def save_users(data):
+    with open(USERS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def load_metadata():
+    if os.path.exists(METADATA_FILE):
+        with open(METADATA_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+def save_metadata(data):
+    with open(METADATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def create_sample_textures():
+    for i, base_color in enumerate([
+        [220, 200, 180], [180, 160, 140], [240, 235, 225], 
+        [130, 120, 110], [200, 180, 160], [160, 140, 120]
+    ]):
+        img = np.full((600, 600, 3), base_color, dtype=np.uint8)
+        noise = np.random.randint(-10, 10, (600, 600, 3))
+        img = np.clip(img.astype(int) + noise, 0, 255).astype(np.uint8)
+        for _ in range(np.random.randint(8, 15)):
+            variation = np.random.randint(-40, 50)
+            vein_color = [
+                np.clip(base_color[0] + variation, 50, 250),
+                np.clip(base_color[1] + variation, 50, 250),
+                np.clip(base_color[2] + variation, 50, 250)
+            ]
+            start_x, start_y = np.random.randint(0, 600, 2)
+            num_points = np.random.randint(15, 30)
+            pts = []
+            x, y = start_x, start_y
+            for _ in range(num_points):
+                x += np.random.randint(-30, 40)
+                y += np.random.randint(-20, 30)
+                x, y = np.clip(x, 0, 599), np.clip(y, 0, 599)
+                pts.append([x, y])
+            pts = np.array(pts, dtype=np.int32)
+            thickness = np.random.randint(2, 8)
+            cv2.polylines(img, [pts], False, vein_color, thickness, lineType=cv2.LINE_AA)
+            if np.random.random() > 0.5:
+                branch_pts = pts[-5:] + np.random.randint(-15, 15, pts[-5:].shape)
+                branch_pts = np.clip(branch_pts, 0, 599)
+                cv2.polylines(img, [branch_pts], False, vein_color, 1, lineType=cv2.LINE_AA)
+        for _ in range(np.random.randint(5, 10)):
+            x1, y1 = np.random.randint(0, 600, 2)
+            x2, y2 = np.random.randint(0, 600, 2)
+            light_color = [min(255, c + 30) for c in base_color]
+            cv2.line(img, (x1, y1), (x2, y2), light_color, 1, cv2.LINE_AA)
+        cv2.imwrite(f"textures/marble_{i}.jpg", img)
+
+if not os.listdir("textures"):
+    create_sample_textures()
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request, error: str = None):
+    return templates.TemplateResponse("login.html", {"request": request, "error": error})
+
+@app.post("/login")
+async def login_post(request: Request, email: str = Form(...), password: str = Form(...)):
+    users = load_users()
+    if email not in users:
+        return templates.TemplateResponse("login.html", {"request": request, "error": "البريد غير مسجل"})
+    if users[email]["password"] != hash_password(password):
+        return templates.TemplateResponse("login.html", {"request": request, "error": "كلمة المرور خاطئة"})
+    request.session["user"] = {"email": email, "name": users[email].get("name", email.split("@")[0])}
+    return RedirectResponse("/", status_code=303)
+
+@app.get("/register", response_class=HTMLResponse)
+async def register_page(request: Request, error: str = None):
+    return templates.TemplateResponse("register.html", {"request": request, "error": error})
+
+@app.post("/register")
+async def register_post(request: Request, name: str = Form(...), email: str = Form(...), password: str = Form(...)):
+    users = load_users()
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        return templates.TemplateResponse("register.html", {"request": request, "error": "إيميل غير صحيح"})
+    if email in users:
+        return templates.TemplateResponse("register.html", {"request": request, "error": "البريد مسجل مسبقاً"})
+    if len(password) < 4:
+        return templates.TemplateResponse("register.html", {"request": request, "error": "كلمة المرور قصيرة"})
+    users[email] = {"name": name.strip(), "password": hash_password(password)}
+    save_users(users)
+    request.session["user"] = {"email": email, "name": name.strip()}
+    return RedirectResponse("/", status_code=303)
+
+@app.get("/logout")
+async def logout(request: Request):
+    request.session.pop("user", None)
+    return RedirectResponse("/")
+
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    user = request.session.get("user")
+    metadata = load_metadata()
+    marble_list = []
+    for filename in os.listdir("textures"):
+        if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            name = metadata.get(filename, filename.replace("_", " ").replace(".jpg", "").replace(".png", ""))
+            marble_list.append({"filename": filename, "name": name})
+    return templates.TemplateResponse("index.html", {"request": request, "marbles": marble_list, "user": user})
+
+@app.post("/upload_marble/")
+async def upload_marble(file: UploadFile = File(...), name: str = Form(...)):
+    if not name.strip():
+        return JSONResponse({"error": "أدخل اسم الرخام"}, 400)
+    contents = await file.read()
+    img = Image.open(io.BytesIO(contents)).convert("RGB")
+    filename = f"{uuid.uuid4().hex}_{file.filename}"
+    img.save(f"textures/{filename}")
+    metadata = load_metadata()
+    metadata[filename] = name.strip()
+    save_metadata(metadata)
+    return JSONResponse({"status": "تم الرفع", "filename": filename, "name": name})
+
+@app.post("/upload_room/")
+async def upload_room(file: UploadFile = File(...)):
+    contents = await file.read()
+    img = Image.open(io.BytesIO(contents)).convert("RGB")
+    filename = f"uploads/room_{uuid.uuid4().hex}.jpg"
+    img.save(filename)
+    cv_img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+    gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(gray, 50, 150)
+    cv2.imwrite(filename.replace(".jpg", "_edges.jpg"), edges)
+    return JSONResponse({"image_path": filename})
+
+@app.post("/render/")
+async def render_marble(
+    image_path: str = Form(...),
+    texture_name: str = Form(...),
+    pts: str = Form(...),
+    scale: float = Form(1.0),
+    rotation: float = Form(0.0),
+    brightness: float = Form(1.0)
+):
+    try:
+        points = list(map(int, pts.split(',')))
+        if len(points) != 8:
+            return JSONResponse({"error": "حدد 4 نقاط"}, 400)
+        src_pts = np.array([[points[0], points[1]], [points[2], points[3]], [points[4], points[5]], [points[6], points[7]]], dtype=np.float32)
+        img = cv2.imread(image_path)
+        if img is None: return JSONResponse({"error": "صورة الغرفة غير موجودة"}, 404)
+        texture = cv2.imread(f"textures/{texture_name}")
+        if texture is None: return JSONResponse({"error": "الرخام غير موجود"}, 404)
+        h, w = img.shape[:2]
+        width = int(max(np.linalg.norm(src_pts[0] - src_pts[1]), np.linalg.norm(src_pts[2] - src_pts[3])))
+        height = int(max(np.linalg.norm(src_pts[0] - src_pts[3]), np.linalg.norm(src_pts[1] - src_pts[2])))
+        width, height = max(10, width), max(10, height)
+        texture_resized = cv2.resize(texture, (int(width * scale), int(height * scale)))
+        if rotation != 0:
+            center = (texture_resized.shape[1] // 2, texture_resized.shape[0] // 2)
+            texture_resized = cv2.warpAffine(texture_resized, cv2.getRotationMatrix2D(center, rotation, 1.0), (texture_resized.shape[1], texture_resized.shape[0]))
+        if brightness != 1.0:
+            texture_resized = cv2.convertScaleAbs(texture_resized, alpha=brightness, beta=0)
+        if texture_resized.shape[0] < height or texture_resized.shape[1] < width:
+            texture_resized = cv2.resize(texture_resized, (width, height))
+        else:
+            start_y, start_x = (texture_resized.shape[0] - height) // 2, (texture_resized.shape[1] - width) // 2
+            texture_resized = texture_resized[start_y:start_y+height, start_x:start_x+width]
+        dst_pts = np.array([[0, 0], [width-1, 0], [width-1, height-1], [0, height-1]], dtype=np.float32)
+        warped_texture = cv2.warpPerspective(texture_resized, cv2.getPerspectiveTransform(dst_pts, src_pts), (w, h))
+        mask = np.zeros((h, w), dtype=np.uint8)
+        cv2.fillPoly(mask, [src_pts.astype(np.int32)], 255)
+        result = cv2.add(cv2.bitwise_and(img, img, mask=cv2.bitwise_not(mask)), cv2.bitwise_and(warped_texture, warped_texture, mask=mask))
+        output_filename = f"static/result_{uuid.uuid4().hex}.jpg"
+        cv2.imwrite(output_filename, result)
+        return JSONResponse({"result_image": output_filename})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, 500)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+

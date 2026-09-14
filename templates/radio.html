@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الراديو - سباهية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&family=Aref+Ruqaa:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Tajawal', sans-serif; margin: 0; background: linear-gradient(135deg, #1a3c34 0%, #2e5d4a 50%, #d4af37 100%); color: white; direction: rtl; min-height: 100vh; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.85); padding: 15px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.5); position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 22px; font-weight: bold; color: #d4af37; display: flex; align-items: center; gap: 10px; }
+        .logo-img { width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 2px solid #ff0000; }
+        .menu-btn { background: none; border: none; font-size: 30px; cursor: pointer; color: #d4af37; }
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: #1a3c34; color: white; transition: left 0.3s ease; z-index: 200; box-shadow: 2px 0 10px rgba(0,0,0,0.5); padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .sidebar.open { left: 0; }
+        .sidebar h2 { color: #d4af37; margin-top: 0; }
+        .sidebar ul { list-style: none; padding: 0; }
+        .sidebar a { color: white; text-decoration: none; font-size: 18px; font-weight: bold; display: block; padding: 10px; border-radius: 8px; margin-bottom: 5px; }
+        .sidebar a:hover { background: #d4af37; color: black; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 150; display: none; }
+        .overlay.show { display: block; }
+        .container { max-width: 900px; margin: 30px auto; padding: 20px; }
+        .header-title { text-align: center; color: #d4af37; font-family: 'Aref Ruqaa', serif; font-size: 38px; margin-bottom: 10px; }
+        .header-sub { text-align: center; color: white; font-size: 16px; margin-bottom: 30px; }
+        .main-player { background: rgba(0,0,0,0.6); border: 2px solid #d4af37; border-radius: 15px; padding: 25px; margin-bottom: 25px; text-align: center; }
+        .now-playing { color: #d4af37; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
+        #mainAudio { width: 100%; height: 45px; border-radius: 25px; }
+        .stations-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
+        .station-card { background: rgba(0,0,0,0.5); border: 2px solid #2e5d4a; border-radius: 12px; padding: 20px 15px; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .station-card:hover { border-color: #d4af37; transform: translateY(-3px); box-shadow: 0 5px 20px rgba(212,175,55,0.3); }
+        .station-card.active { border-color: #d4af37; background: rgba(212,175,55,0.2); box-shadow: 0 0 20px rgba(212,175,55,0.5); }
+        .station-icon { font-size: 40px; margin-bottom: 10px; }
+        .station-name { font-size: 16px; font-weight: bold; color: white; }
+        .station-desc { font-size: 12px; color: #d4af37; margin-top: 5px; }
+        .section-title { color: #d4af37; font-size: 22px; font-weight: bold; margin: 30px 0 15px; border-right: 4px solid #d4af37; padding-right: 10px; }
+    </style>
+</head>
+<body>
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+    <div class="sidebar" id="sidebar">
+        <h2>القائمة</h2>
+        <ul>
+            <li><a href="/">🏠 الصفحة الرئيسية</a></li>
+            <li><a href="/forum">💬 المنتدى</a></li>
+            <li><a href="/radio" style="background:#d4af37; color:black;">📻 الراديو</a></li>
+            <li><a href="/exchange_rate">💱 سعر الصرف</a></li>
+            <li><a href="/logout">🚪 تسجيل الخروج</a></li>
+        </ul>
+    </div>
+    <div class="navbar">
+        <div class="logo">
+            <img src="https://lh3.googleusercontent.com/d/1gexLxzMHdjndfzzl7Wo9w8PPBC29GKFU" class="logo-img">
+            <span>سباهية - الراديو</span>
+        </div>
+        <button class="menu-btn" onclick="toggleMenu()">☰</button>
+    </div>
+    <div class="container">
+        <h1 class="header-title">📻 راديو سباهية</h1>
+        <p class="header-sub">استمع إلى أفضل الإذاعات السورية والعربية مباشرة</p>
+        <div class="main-player">
+            <div class="now-playing" id="nowPlaying">اختر إذاعة للبدء 🎵</div>
+            <audio id="mainAudio" controls></audio>
+        </div>
+
+        <h2 class="section-title">🇸🇾 الإذاعات السورية</h2>
+        <div class="stations-grid">
+            <div class="station-card" onclick="playStation('https://radiodamascus.ortas.live/RDimshq/RDimshqAudioLive/playlist.m3u8', 'إذاعة دمشق', this)">
+                <div class="station-icon">📻</div>
+                <div class="station-name">إذاعة دمشق</div>
+                <div class="station-desc">95.0 FM</div>
+            </div>
+            <div class="station-card" onclick="playStation('http://radioshamfm.grtvstream.com:2199/tunein/shamfm.pls', 'شام FM', this)">
+                <div class="station-icon">🎼</div>
+                <div class="station-name">شام FM</div>
+                <div class="station-desc">92.3 دمشق</div>
+            </div>
+            <div class="station-card" onclick="playStation('http://82.137.248.20:1935/RSyriana/RSyrianaLive/playlist.m3u8', 'راديو سوريا (سوريانا)', this)">
+                <div class="station-icon">🇸🇾</div>
+                <div class="station-name">راديو سوريا (سوريانا)</div>
+                <div class="station-desc">بث مباشر</div>
+            </div>
+            <div class="station-card" onclick="playStation('http://82.137.248.20:1935/RShabab/RShababLive/playlist.m3u8', 'صوت الشباب', this)">
+                <div class="station-icon">🎤</div>
+                <div class="station-name">صوت الشباب</div>
+                <div class="station-desc">RTV Syria</div>
+            </div>
+            <div class="station-card" onclick="playStation('http://82.137.248.20:1935/RKarma/RKarmaLive/playlist.m3u8', 'راديو الكرامة', this)">
+                <div class="station-icon">🎵</div>
+                <div class="station-name">راديو الكرامة</div>
+                <div class="station-desc">بث مباشر</div>
+            </div>
+            <div class="station-card" onclick="playStation('http://82.137.248.20:1935/RZenobia/RZenobiaLive/playlist.m3u8', 'راديو زينوبيا', this)">
+                <div class="station-icon">🏛️</div>
+                <div class="station-name">راديو زينوبيا</div>
+                <div class="station-desc">بث مباشر</div>
+            </div>
+        </div>
+
+        <h2 class="section-title">📖 الإذاعات الدينية</h2>
+        <div class="stations-grid">
+            <div class="station-card" onclick="playStation('https://backup.qurango.net/radio/tarateel', 'القرآن الكريم', this)">
+                <div class="station-icon">📖</div>
+                <div class="station-name">القرآن الكريم</div>
+                <div class="station-desc">تلاوات</div>
+            </div>
+            <div class="station-card" onclick="playStation('https://backup.qurango.net/radio/mishary_alafasy', 'مشاري العفاسي', this)">
+                <div class="station-icon">🕌</div>
+                <div class="station-name">مشاري العفاسي</div>
+                <div class="station-desc">تلاوات</div>
+            </div>
+        </div>
+
+        <h2 class="section-title">🌍 الإذاعات العربية</h2>
+        <div class="stations-grid">
+            <div class="station-card" onclick="playStation('https://n0d.radiojar.com/8s5u5tpdtwzuv', 'راديو الشام', this)">
+                <div class="station-icon">🎵</div>
+                <div class="station-name">راديو الشام</div>
+                <div class="station-desc">موسيقى</div>
+            </div>
+            <div class="station-card" onclick="playStation('https://stream.zeno.fm/0r0xa792kwzuv', 'راديو طرب', this)">
+                <div class="station-icon">🎶</div>
+                <div class="station-name">راديو طرب</div>
+                <div class="station-desc">أغاني عربية</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('show');
+        }
+        function playStation(url, name, card) {
+            document.querySelectorAll('.station-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            document.getElementById('nowPlaying').textContent = '🎵 الآن يعمل: ' + name;
+            const audio = document.getElementById('mainAudio');
+            audio.src = url;
+            audio.play().catch(e => {
+                document.getElementById('nowPlaying').textContent = '⚠️ تعذر تشغيل الإذاعة، حاول مرة أخرى';
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم الأدمن - سباهية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Tajawal', sans-serif; margin: 0; background: linear-gradient(135deg, #1a3c34 0%, #2e5d4a 50%, #d4af37 100%); color: #333; direction: rtl; min-height: 100vh; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.8); padding: 15px 20px; }
+        .logo { font-size: 22px; font-weight: bold; color: #d4af37; }
+        .btn-back { background: #d4af37; color: black; padding: 8px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; }
+        .container { max-width: 900px; margin: 20px auto; padding: 20px; }
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .card h2 { color: #1a3c34; margin-top: 0; border-bottom: 2px solid #d4af37; padding-bottom: 10px; }
+        .user-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; flex-wrap: wrap; gap: 10px; }
+        .user-info { flex: 1; min-width: 200px; }
+        .user-name { font-weight: bold; color: #1a3c34; font-size: 16px; }
+        .user-phone { font-size: 13px; color: #666; }
+        .badges { margin-top: 5px; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-left: 5px; }
+        .badge-admin { background: #d4af37; color: black; }
+        .badge-banned { background: #c62828; color: white; }
+        .badge-forum-banned { background: #f57c00; color: white; }
+        .badge-active { background: #2e7d32; color: white; }
+        .btn-sm { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-size: 12px; margin-left: 5px; }
+        .btn-danger { background: #c62828; color: white; }
+        .btn-warning { background: #f57c00; color: white; }
+        .btn-success { background: #2e7d32; color: white; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+        .stat-box { background: #1a3c34; color: white; padding: 20px; border-radius: 10px; text-align: center; }
+        .stat-box .num { font-size: 32px; font-weight: bold; color: #d4af37; }
+        .stat-box .label { font-size: 14px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">🛡️ لوحة تحكم الأدمن</div>
+        <a href="/" class="btn-back">→ العودة للموقع</a>
+    </div>
+    <div class="container">
+        <div class="card">
+            <h2>📊 إحصائيات</h2>
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="num">{{ users | length }}</div>
+                    <div class="label">إجمالي المستخدمين</div>
+                </div>
+                <div class="stat-box">
+                    <div class="num">{{ users.values() | selectattr('forum_banned') | list | length }}</div>
+                    <div class="label">محظورون من المنتدى</div>
+                </div>
+                <div class="stat-box">
+                    <div class="num">{{ users.values() | selectattr('is_banned') | list | length }}</div>
+                    <div class="label">محظورون بالكامل</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>👥 إدارة المستخدمين</h2>
+            {% for phone, user in users.items() %}
+            <div class="user-row">
+                <div class="user-info">
+                    <div class="user-name">{{ user.name }} {% if user.is_admin %}👑{% endif %}</div>
+                    <div class="user-phone">📱 {{ phone }} | 🌍 {{ user.country }}</div>
+                    <div class="badges">
+                        {% if user.is_admin %}<span class="badge badge-admin">أدمن</span>{% endif %}
+                        {% if user.is_banned %}<span class="badge badge-banned">محظور بالكامل</span>{% endif %}
+                        {% if user.forum_banned %}<span class="badge badge-forum-banned">محظور من المنتدى</span>{% endif %}
+                        {% if not user.is_banned and not user.forum_banned %}<span class="badge badge-active">نشط</span>{% endif %}
+                    </div>
+                </div>
+                <div>
+                    {% if not user.is_admin %}
+                        {% if user.forum_banned %}
+                        <form action="/admin/unban_forum/{{ phone }}" method="post" style="display:inline;">
+                            <button type="submit" class="btn-sm btn-success">✅ إلغاء حظر المنتدى</button>
+                        </form>
+                        {% else %}
+                        <form action="/admin/ban_forum/{{ phone }}" method="post" style="display:inline;">
+                            <button type="submit" class="btn-sm btn-warning">🚫 حظر من المنتدى</button>
+                        </form>
+                        {% endif %}
+                        
+                        {% if user.is_banned %}
+                        <form action="/admin/unban_user/{{ phone }}" method="post" style="display:inline;">
+                            <button type="submit" class="btn-sm btn-success">✅ إلغاء الحظر الكامل</button>
+                        </form>
+                        {% else %}
+                        <form action="/admin/ban_user/{{ phone }}" method="post" style="display:inline;">
+                            <button type="submit" class="btn-sm btn-danger">⛔ حظر كامل</button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سباهية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&family=Aref+Ruqaa:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Tajawal', sans-serif; margin: 0; color: #333; direction: rtl; background: linear-gradient(135deg, #1a3c34 0%, #2e5d4a 50%, #d4af37 100%); }
+        .navbar { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.6); padding: 15px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(5px); }
+        .logo-container { display: flex; flex-direction: column; align-items: center; }
+        .logo-img { width: 70px; height: 70px; object-fit: cover; border-radius: 50%; border: 2px solid #ff0000; }
+        
+        /* الوميض الأحمر بحجم صغير جداً */
+        .blink-red { width: 5px !important; height: 5px !important; border-radius: 50%; background-color: red; display: inline-block; margin-top: 5px; animation: blink 1s infinite; box-shadow: 0 0 5px red; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        
+        .menu-btn { background: none; border: none; font-size: 30px; cursor: pointer; color: #d4af37; order: -1; }
+        .sidebar { position: fixed; top: 0; left: -250px; width: 250px; height: 100%; background: #1a3c34; color: white; transition: left 0.3s ease; z-index: 200; box-shadow: 2px 0 10px rgba(0,0,0,0.5); padding: 20px; box-sizing: border-box; }
+        .sidebar.open { left: 0; }
+        .sidebar a { color: white; text-decoration: none; font-size: 18px; font-weight: bold; display: block; padding: 10px; border-radius: 8px; }
+        .sidebar a:hover { background: #d4af37; color: black; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 150; display: none; }
+        .overlay.show { display: block; }
+        
+        .hero { padding: 80px 20px; text-align: center; color: white; text-shadow: 2px 2px 8px black; background-image: url('https://images.unsplash.com/photo-1615873968403-89e068629265?q=80&w=2000&auto=format&fit=crop'); background-size: cover; background-position: center; border-bottom: 4px solid #d4af37; }
+        .hero h1 { background: rgba(0,0,0,0.6); display: inline-block; padding: 10px 20px; border-radius: 10px; }
+        .hero p { background: rgba(0,0,0,0.6); display: inline-block; padding: 5px 15px; border-radius: 5px; }
+        .hero h1 { font-size: 36px; color: #d4af37; }
+        
+        .card { background: rgba(255,255,255,0.95); border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 900px; margin-left: auto; margin-right: auto; }
+        .card h3 { color: #1a3c34; }
+        
+        .marble-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+        .marble-card { border: 2px solid #d4af37; border-radius: 8px; overflow: hidden; cursor: pointer; text-align: center; background: white; transition: all 0.3s; }
+        .marble-card img { width: 100%; height: 100px; object-fit: cover; }
+        .marble-card span { display: block; padding: 8px; font-weight: bold; color: #1a3c34; }
+        .selected { border-color: #ff0000; box-shadow: 0 0 10px rgba(255,0,0,0.5); }
+        
+        .btn-gold { background: #d4af37; color: black; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; font-size: 16px; width: 100%; cursor: pointer; margin-top: 10px; }
+        .btn-gold:hover { opacity: 0.9; }
+        
+        input[type="text"], input[type="file"], textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
+        
+        .result-box { border: 2px solid #d4af37; border-radius: 10px; padding: 20px; text-align: center; min-height: 200px; margin-top: 20px; background: #fff; overflow: hidden; }
+        .loading { font-size: 20px; color: #1a3c34; font-weight: bold; }
+        
+        /* الصور الناتجة بحجم 50x50 بكسل */
+        .vertical-result-list { display: flex; flex-direction: column; gap: 15px; width: 100%; box-sizing: border-box; }
+        .result-item { width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 10px; padding: 10px; background: #f9f9f9; }
+        .result-item img { width: 50px !important; height: 50px !important; object-fit: cover; border-radius: 8px; display: block; margin: 0 auto; }
+        
+        .download-btn { display: block; width: 100%; margin-top: 10px; text-decoration: none; box-sizing: border-box; }
+    
+/* ===== تنسيقات الراديو في القائمة الجانبية ===== */
+.radio-station-btn {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 5px;
+    background: #2e5d4a;
+    color: white;
+    border: 1px solid #d4af37;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 12px;
+    text-align: right;
+    transition: all 0.2s;
+}
+.radio-station-btn:hover { background: #3d7d64; }
+.radio-station-btn.active { background: #d4af37; color: #1a3c34; font-weight: bold; }
+
+</style>
+</head>
+<body>
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+    <div class="sidebar" id="sidebar">
+        <h2 style="color:#d4af37;">القائمة <span class="blink-red"></span></h2>
+        <ul style="list-style:none; padding:0;">
+            <li style="margin-bottom:15px;">
+                <a href="#" onclick="toggleBuyOptions(event)" style="display:flex; justify-content:space-between; align-items:center; background:#d4af37; color:black; padding:12px; border-radius:8px; font-weight:bold; text-decoration:none;">
+                    <span>🛒 اشتري الرخام</span>
+                    <span style="font-size:12px;">▼</span>
+                </a>
+                <ul id="buyOptions" style="display:none; list-style:none; padding-right:0; margin-top:10px;">
+                    <li style="margin-bottom:8px;">
+                        <a href="https://wa.me/963995600240?text=مرحباً، أريد شراء مطبخ رخام" target="_blank" style="background:#2e7d32; color:white; padding:10px; border-radius:8px; font-size:14px; display:block; text-align:center; text-decoration:none; font-weight:bold;">
+                            🍽️ شراء مطبخ
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://wa.me/963995600240?text=مرحباً، أريد إعلان معمل الرخام في الموقع" target="_blank" style="background:#1565c0; color:white; padding:10px; border-radius:8px; font-size:14px; display:block; text-align:center; text-decoration:none; font-weight:bold;">
+                            📢 إعلان أصحاب المعامل
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li style="margin-bottom:15px;"><a href="/radio" style="color:white; text-decoration:none; font-size:18px; font-weight:bold; display:block; padding:10px;">📻 الراديو</a></li>
+            <li style="margin-bottom:15px;"><a href="/" style="color:white; text-decoration:none; font-size:18px; font-weight:bold; display:block; padding:10px;">🏠 الصفحة الرئيسية</a></li>
+            {% if user.is_admin %}<li style="margin-bottom:15px;"><a href="/admin" style="color:#d4af37; text-decoration:none; font-size:18px; font-weight:bold; display:block; padding:10px;">🛡️ لوحة التحكم</a></li>{% endif %}
+            <li style="margin-bottom:15px;"><a href="/exchange_rate" style="color:white; text-decoration:none; font-size:18px; font-weight:bold; display:block; padding:10px;">💱 سعر الصرف</a></li>
+            <li style="margin-bottom:15px;"><a href="/forum" style="color:white; text-decoration:none; font-size:18px; font-weight:bold; display:block; padding:10px;">💬 المنتدى <span class="blink-red"></span></a></li>
+            <li><a href="/logout" style="color:white; text-decoration:none; font-size:18px; font-weight:bold; display:block; padding:10px;">🚪 تسجيل الخروج</a></li>
+        </ul>
+    </div>
+
+    <div class="navbar">
+        <div class="logo-container">
+            <img src="https://lh3.googleusercontent.com/d/1gexLxzMHdjndfzzl7Wo9w8PPBC29GKFU" class="logo-img">
+            <span class="blink-red"></span>
+        </div>
+        <button class="menu-btn" onclick="toggleMenu()">☰</button>
+    </div>
+
+    <div class="hero">
+        <h1>معاينة تركيب الرخام بالواقع</h1>
+        <p>المعزز</p>
+    </div>
+
+    <div class="card">
+        <h3>🎨 اختر نوع الرخام</h3>
+        <div class="marble-grid">
+            {% for marble in marble_list %}
+            <div class="marble-card" onclick="selectMarble(this, '{{ marble.name }}')">
+                <img src="{{ marble.img }}" alt="{{ marble.name }}">
+                <span>{{ marble.name }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📷 ارفع صورة من الاستوديو</h3>
+        <form id="generationForm" action="/generate_ai" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" accept="image/*" required>
+            <input type="hidden" name="marble_type" id="selected_marble_type">
+            <button type="submit" class="btn-gold">🤖 توليد دمج مطبخ</button>
+        </form>
+        {% if error %}<p style="color:red; text-align:center;">{{ error }}</p>{% endif %}
+    </div>
+
+    <div class="card">
+        <h3>✨ النتيجة النهائية</h3>
+        <div class="result-box" id="resultBox">
+            {% if result_images %}
+            <p style="color: #1a3c34; font-weight: bold;">تم التوليد بنجاح!</p>
+            <div class="vertical-result-list">
+                {% if result_images %}
+                <div class="result-item">
+                    <img src="{{ result_images[0] }}" alt="نتيجة التوليد">
+                    <a href="{{ result_images[0] }}" download="marble_design.jpg" class="btn-gold download-btn">📥 تحميل الصورة</a>
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <p>يرجى اختيار نوع الرخام ورفع صورة ثم الضغط على زر "توليد دمج مطبخ".</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        let selectedMarbleValue = '';
+
+        function toggleBuyOptions(event) {
+            event.preventDefault();
+            const options = document.getElementById('buyOptions');
+            options.style.display = (options.style.display === 'none' || options.style.display === '') ? 'block' : 'none';
+        }
+
+        function toggleBuyOptions(event) { event.preventDefault(); const options = document.getElementById("buyOptions"); options.style.display = (options.style.display === "none" || options.style.display === "") ? "block" : "none"; } function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('show');
+        }
+
+        function selectMarble(element, category) {
+            document.querySelectorAll('.marble-card').forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
+            document.getElementById('selected_marble_type').value = category;
+            selectedMarbleValue = category;
+        }
+
+        document.getElementById('generationForm').addEventListener('submit', function(e) {
+            if(!selectedMarbleValue) {
+                e.preventDefault();
+                alert('يرجى اختيار نوع الرخام أولاً!');
+                return;
+            }
+            const box = document.getElementById('resultBox');
+            box.innerHTML = '<p class="loading">⏳ جاري توليد دمج المطبخ، يرجى الانتظار 5 ثوانٍ...</p>';
+        });
+    
+        function toggleRadioPanel(event) {
+            event.preventDefault();
+            const panel = document.getElementById('radioPanel');
+            panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
+        }
+        function playRadio(url, btn) {
+            const audio = document.getElementById('radioAudio');
+            document.querySelectorAll('.radio-station-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            audio.src = url;
+            audio.play().catch(e => console.log('خطأ في التشغيل:', e));
+        }
+</script>
+</body>
+</html>
