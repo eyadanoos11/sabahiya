@@ -160,7 +160,17 @@ async def generate_ai(request: Request, marble_type: str = Form(...), file: Uplo
 
 def load_posts():
     data, _ = read_json_from_github("posts.json")
-    return data if data is not None else []
+    if data is None:
+        return []
+    # ضمان وجود الحقول الجديدة
+    for post in data:
+        if "likes" not in post:
+            post["likes"] = []
+        if "comments" not in post:
+            post["comments"] = []
+        if "time" not in post:
+            post["time"] = ""
+    return data
 
 def save_posts(posts):
     if len(posts) > 1000:
@@ -174,7 +184,18 @@ async def forum(request: Request):
     posts = load_posts()
     users = load_users()
     user = users.get(request.session["user"], {})
-    return templates.TemplateResponse(request=request, name="forum.html", context={"posts": posts[::-1], "user": user})
+    user_phone = request.session["user"]
+    # تجهيز كل منشور مع معلومات إضافية للعرض
+    posts_with_data = []
+    for i, post in enumerate(posts[::-1]):
+        original_index = len(posts) - 1 - i
+        post_data = dict(post)
+        post_data["original_index"] = original_index
+        post_data["liked_by_user"] = user_phone in post.get("likes", [])
+        post_data["likes_count"] = len(post.get("likes", []))
+        post_data["comments_count"] = len(post.get("comments", []))
+        posts_with_data.append(post_data)
+    return templates.TemplateResponse(request=request, name="forum.html", context={"posts": posts_with_data, "user": user, "user_phone": user_phone})
 
 @app.post("/forum")
 async def post_message(request: Request, content: str = Form(...)):
@@ -364,5 +385,47 @@ def get_syrian_radios():
 async def api_syrian_radios():
     """API لجلب الإذاعات السورية"""
     return get_syrian_radios()
+
+
+
+import requests as req_lib
+
+TMDB_API_KEY = "151a3932cc4c9aefce50797a0ed698ad"  # <-- ضع مفتاحك هنا
+TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
+POSTER_CACHE = {}
+
+def get_movie_poster(title, year=None):
+    """جلب رابط البوستر الرسمي للفيلم من TMDb API"""
+    cache_key = f"{title}_{year}"
+    if cache_key in POSTER_CACHE:
+        return POSTER_CACHE[cache_key]
+    
+    try:
+        url = f"https://api.themoviedb.org/3/search/movie"
+        params = {"api_key": TMDB_API_KEY, "query": title, "language": "ar"}
+        if year:
+            params["year"] = year
+        
+        response = req_lib.get(url, params=params, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("results") and len(data["results"]) > 0:
+                movie = data["results"][0]
+                poster_path = movie.get("poster_path")
+                if poster_path:
+                    poster_url = TMDB_IMAGE_BASE + poster_path
+                    POSTER_CACHE[cache_key] = poster_url
+                    return poster_url
+    except Exception as e:
+        print(f"خطأ في جلب البوستر: {e}")
+    
+    POSTER_CACHE[cache_key] = None
+    return None
+
+
+@app.get("/api/movie_poster")
+async def api_movie_poster(title: str, year: str = ""):
+    poster = get_movie_poster(title, year)
+    return {"poster": poster}
 
 uvicorn.run(app, host="0.0.0.0", port=port)

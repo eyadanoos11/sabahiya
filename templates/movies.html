@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الأفلام - سباهية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Tajawal', sans-serif; margin: 0; background: linear-gradient(135deg, #1a3c34 0%, #2e5d4a 50%, #d4af37 100%); color: white; direction: rtl; min-height: 100vh; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.85); padding: 15px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.5); position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 22px; font-weight: bold; color: #d4af37; display: flex; align-items: center; gap: 10px; }
+        .logo-img { width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 2px solid #ff0000; }
+        .menu-btn { background: none; border: none; font-size: 30px; cursor: pointer; color: #d4af37; }
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: #1a3c34; color: white; transition: left 0.3s ease; z-index: 200; box-shadow: 2px 0 10px rgba(0,0,0,0.5); padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .sidebar.open { left: 0; }
+        .sidebar h2 { color: #d4af37; margin-top: 0; }
+        .sidebar ul { list-style: none; padding: 0; }
+        .sidebar a { color: white; text-decoration: none; font-size: 18px; font-weight: bold; display: block; padding: 10px; border-radius: 8px; margin-bottom: 5px; }
+        .sidebar a:hover { background: #d4af37; color: black; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 150; display: none; }
+        .overlay.show { display: block; }
+        .container { max-width: 1000px; margin: 30px auto; padding: 20px; }
+        .header-title { text-align: center; color: #d4af37; font-family: 'Tajawal', serif; font-size: 38px; margin-bottom: 10px; }
+        .header-sub { text-align: center; color: white; font-size: 16px; margin-bottom: 30px; }
+        .section-title { color: #d4af37; font-size: 24px; font-weight: bold; margin: 40px 0 20px; border-right: 5px solid #d4af37; padding-right: 15px; }
+        .movies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
+        .movie-card { background: rgba(0,0,0,0.5); border: 2px solid #2e5d4a; border-radius: 12px; overflow: hidden; transition: all 0.3s; display: flex; flex-direction: column; }
+        .movie-card:hover { border-color: #d4af37; transform: translateY(-5px); box-shadow: 0 5px 20px rgba(212,175,55,0.3); }
+        .movie-poster-img { width: 100%; height: 260px; object-fit: cover; display: block; background: #1a1a1a; }
+        .movie-poster-placeholder { width: 100%; height: 260px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; color: #d4af37; font-size: 60px; }
+        .movie-info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
+        .movie-title { font-size: 16px; font-weight: bold; color: white; margin-bottom: 5px; }
+        .movie-year { font-size: 13px; color: #d4af37; margin-bottom: 10px; }
+        .watch-btn { display: block; width: 100%; padding: 10px; margin-top: auto; background: #d4af37; color: black; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; text-align: center; text-decoration: none; transition: all 0.2s; }
+        .watch-btn:hover { background: #b8860b; transform: scale(1.02); }
+        .watch-btn.no-link { background: #555; color: #ccc; }
+    </style>
+</head>
+<body>
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+    <div class="sidebar" id="sidebar">
+        <h2>القائمة</h2>
+        <ul>
+            <li><a href="/">🏠 الصفحة الرئيسية</a></li>
+            <li><a href="/forum">💬 المنتدى</a></li>
+            <li><a href="/radio">📻 الراديو</a></li>
+            <li><a href="/movies" style="background:#d4af37; color:black;">🎬 الأفلام</a></li>
+            <li><a href="/exchange_rate">💱 سعر الصرف</a></li>
+            <li><a href="/logout">🚪 تسجيل الخروج</a></li>
+        </ul>
+    </div>
+    <div class="navbar">
+        <div class="logo">
+            <img src="https://lh3.googleusercontent.com/d/1gexLxzMHdjndfzzl7Wo9w8PPBC29GKFU" class="logo-img">
+            <span>سباهية - الأفلام</span>
+        </div>
+        <button class="menu-btn" onclick="toggleMenu()">☰</button>
+    </div>
+    <div class="container">
+        <h1 class="header-title">🎬 مكتبة الأفلام</h1>
+        <p class="header-sub">أحدث الأفلام المترجمة وأفضل الأفلام في التاريخ</p>
+
+        <h2 class="section-title">🎥 أفلام 2026 المترجمة</h2>
+        <div class="movies-grid" id="movies2026Grid"></div>
+
+        <h2 class="section-title">🏆 أفضل 20 فيلمًا في التاريخ</h2>
+        <div class="movies-grid" id="topMoviesGrid"></div>
+
+        <h2 class="section-title">🇪🇬 20 فيلمًا مصريًا كوميديًا (2026)</h2>
+        <div class="movies-grid" id="egyptian2026Grid"></div>
+
+        <h2 class="section-title">🇪🇬 20 فيلمًا مصريًا كوميديًا (قبل 2026)</h2>
+        <div class="movies-grid" id="egyptianClassicGrid"></div>
+    </div>
+    <script>
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('show');
+        }
+
+        const moviesData = {
+            "movies2026": [
+                { "title": "Spider-Man: Brand New Day", "year": "2026", "watch_url": "" },
+                { "title": "The Odyssey", "year": "2026", "watch_url": "" },
+                { "title": "Sleepwalker", "year": "2026", "watch_url": "" },
+                { "title": "The Passenger", "year": "2026", "watch_url": "" },
+                { "title": "Unconnected", "year": "2026", "watch_url": "" },
+                { "title": "Sunset Strip Killers", "year": "2026", "watch_url": "" },
+                { "title": "Starbright", "year": "2026", "watch_url": "" },
+                { "title": "Hungry", "year": "2026", "watch_url": "" },
+                { "title": "The Devil Wears Prada 2", "year": "2026", "watch_url": "" },
+                { "title": "Get Out 2026", "year": "2026", "watch_url": "" },
+                { "title": "Signal One", "year": "2026", "watch_url": "" },
+                { "title": "Apex", "year": "2026", "watch_url": "" },
+                { "title": "Slanted", "year": "2026", "watch_url": "" },
+                { "title": "Ultimate Revenge", "year": "2026", "watch_url": "" },
+                { "title": "Pinecone", "year": "2026", "watch_url": "" },
+                { "title": "The Bride!", "year": "2026", "watch_url": "" },
+                { "title": "The Cure", "year": "2026", "watch_url": "" },
+                { "title": "Obsession", "year": "2026", "watch_url": "" },
+                { "title": "The Housemaid", "year": "2026", "watch_url": "" },
+                { "title": "Unexpected Family", "year": "2026", "watch_url": "" },
+                { "title": "The Four Gates of Death", "year": "2026", "watch_url": "" }
+            ],
+            "topMovies": [
+                { "title": "Titanic", "year": "1997", "watch_url": "https://www.justwatch.com/us/movie/titanic" },
+                { "title": "The Shawshank Redemption", "year": "1994", "watch_url": "https://www.justwatch.com/us/movie/the-shawshank-redemption" },
+                { "title": "The Godfather", "year": "1972", "watch_url": "https://www.justwatch.com/us/movie/the-godfather" },
+                { "title": "Pulp Fiction", "year": "1994", "watch_url": "https://www.justwatch.com/us/movie/pulp-fiction" },
+                { "title": "Forrest Gump", "year": "1994", "watch_url": "https://www.justwatch.com/us/movie/forrest-gump" },
+                { "title": "Spirited Away", "year": "2001", "watch_url": "https://www.justwatch.com/us/movie/spirited-away" },
+                { "title": "Life Is Beautiful", "year": "1997", "watch_url": "https://www.justwatch.com/us/movie/life-is-beautiful" },
+                { "title": "Interstellar", "year": "2014", "watch_url": "https://www.justwatch.com/us/movie/interstellar" },
+                { "title": "Léon: The Professional", "year": "1994", "watch_url": "https://www.justwatch.com/us/movie/leon-the-professional" },
+                { "title": "Inception", "year": "2010", "watch_url": "https://www.justwatch.com/us/movie/inception" },
+                { "title": "The Truman Show", "year": "1998", "watch_url": "https://www.justwatch.com/us/movie/the-truman-show" },
+                { "title": "Schindler's List", "year": "1993", "watch_url": "https://www.justwatch.com/us/movie/schindlers-list" },
+                { "title": "Hachi: A Dog's Tale", "year": "2009", "watch_url": "https://www.justwatch.com/us/movie/hachi-a-dogs-tale" },
+                { "title": "The Legend of 1900", "year": "1998", "watch_url": "https://www.justwatch.com/us/movie/the-legend-of-1900" },
+                { "title": "Zootopia", "year": "2016", "watch_url": "https://www.justwatch.com/us/movie/zootopia" },
+                { "title": "3 Idiots", "year": "2009", "watch_url": "https://www.justwatch.com/us/movie/3-idiots" },
+                { "title": "WALL·E", "year": "2008", "watch_url": "https://www.justwatch.com/us/movie/wall-e" },
+                { "title": "The Chorus", "year": "2004", "watch_url": "https://www.justwatch.com/us/movie/the-chorus" },
+                { "title": "Infernal Affairs", "year": "2002", "watch_url": "https://www.justwatch.com/us/movie/infernal-affairs" },
+                { "title": "Witness for the Prosecution", "year": "1957", "watch_url": "https://www.justwatch.com/us/movie/witness-for-the-prosecution" }
+            ],
+            "egyptian2026": [
+                { "title": "محمود التاني", "year": "2026", "watch_url": "https://elcinema.com/work/2090265/" },
+                { "title": "خلي بالك من نفسك", "year": "2026", "watch_url": "https://elcinema.com/work/2090126/" },
+                { "title": "جوازة ولا جنازة", "year": "2026", "watch_url": "https://larroza.forum/" },
+                { "title": "برشامة", "year": "2026", "watch_url": "https://arabflix.icu/" },
+                { "title": "صقر وكناريا", "year": "2026", "watch_url": "https://elcinema.com/work/2090178/" },
+                { "title": "ولاد العسل", "year": "2026", "watch_url": "" },
+                { "title": "فاميلي بزنس", "year": "2026", "watch_url": "https://hitv.cam/" },
+                { "title": "الورشة", "year": "2026", "watch_url": "" },
+                { "title": "شمشون ودليلة", "year": "2026", "watch_url": "https://hitv.cam/" },
+                { "title": "الكلام على إيه", "year": "2026", "watch_url": "" },
+                { "title": "الكراش", "year": "2025", "watch_url": "" },
+                { "title": "طلقني", "year": "2025", "watch_url": "https://shoofaflam.tv/" },
+                { "title": "موسم حصاد الكاكا", "year": "2025", "watch_url": "" },
+                { "title": "الشاطر", "year": "2025", "watch_url": "https://shoofaflam.tv/" },
+                { "title": "X مراتي", "year": "2025", "watch_url": "https://shahid.mbc.net/" }
+            ],
+            "egyptianClassic": [
+                { "title": "الكيت كات", "year": "1991", "watch_url": "https://hd.qfilm.tv/" },
+                { "title": "الإرهاب والكباب", "year": "1992", "watch_url": "https://wecima.fan/" },
+                { "title": "طيور الظلام", "year": "1995", "watch_url": "" },
+                { "title": "الناصر صلاح الدين", "year": "1963", "watch_url": "https://dramacafe-tv.baby/" },
+                { "title": "باب الحديد", "year": "1958", "watch_url": "https://shoofaflam.tv/" },
+                { "title": "الأرض", "year": "1970", "watch_url": "https://elcinema.com/work/1001032/" },
+                { "title": "عودة الابن الضال", "year": "1976", "watch_url": "https://tv.apple.com/" },
+                { "title": "إسكندرية ليه", "year": "1979", "watch_url": "https://moviez-films.blogspot.com/" },
+                { "title": "العار", "year": "1982", "watch_url": "" },
+                { "title": "جاءنا البيان التالي", "year": "2001", "watch_url": "" },
+                { "title": "صعيدي في الجامعة الأمريكية", "year": "1998", "watch_url": "https://shoof-tv.com/" },
+                { "title": "همام في أمستردام", "year": "1999", "watch_url": "https://hd.qfilm.tv/" },
+                { "title": "الناظر", "year": "2000", "watch_url": "" },
+                { "title": "ابن حميدو", "year": "1957", "watch_url": "https://hitv.cam/" },
+                { "title": "شارع الحب", "year": "1958", "watch_url": "https://mayamovie.org/" },
+                { "title": "الفتوات", "year": "1980", "watch_url": "" },
+                { "title": "الزوجة الثانية", "year": "1967", "watch_url": "" },
+                { "title": "أنا حرة", "year": "1959", "watch_url": "" },
+                { "title": "بداية ونهاية", "year": "1960", "watch_url": "https://shoofaflam.tv/" },
+                { "title": "شيء من الخوف", "year": "1969", "watch_url": "" }
+            ]
+        };
+
+        async function loadPoster(title, year) {
+            try {
+                const response = await fetch('/api/movie_poster?title=' + encodeURIComponent(title) + '&year=' + year);
+                const data = await response.json();
+                return data.poster;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function renderMovies(containerId, movies) {
+            const grid = document.getElementById(containerId);
+            if (!grid) return;
+            grid.innerHTML = '';
+            
+            for (const movie of movies) {
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                
+                const posterUrl = await loadPoster(movie.title, movie.year);
+                const posterHtml = posterUrl 
+                    ? `<img src="${posterUrl}" alt="${movie.title}" class="movie-poster-img" onerror="this.outerHTML='<div class=\\'movie-poster-placeholder\\'>🎬</div>'">`
+                    : `<div class="movie-poster-placeholder">🎬</div>`;
+                
+                let watchUrl, watchBtnText, btnClass;
+                if (movie.watch_url && movie.watch_url.trim() !== "") {
+                    watchUrl = movie.watch_url;
+                    watchBtnText = '🎥 مشاهدة الآن';
+                    btnClass = 'watch-btn';
+                } else {
+                    watchUrl = 'https://www.google.com/search?q=' + encodeURIComponent('مشاهدة فيلم ' + movie.title + ' ' + movie.year + ' مترجم');
+                    watchBtnText = '🔍 بحث عن الفيلم';
+                    btnClass = 'watch-btn no-link';
+                }
+                
+                card.innerHTML = `
+                    ${posterHtml}
+                    <div class="movie-info">
+                        <div class="movie-title">${movie.title}</div>
+                        <div class="movie-year">${movie.year}</div>
+                        <a href="${watchUrl}" target="_blank" class="${btnClass}">${watchBtnText}</a>
+                    </div>
+                `;
+                grid.appendChild(card);
+            }
+        }
+
+        window.addEventListener('load', () => {
+            renderMovies('movies2026Grid', moviesData.movies2026);
+            renderMovies('topMoviesGrid', moviesData.topMovies);
+            renderMovies('egyptian2026Grid', moviesData.egyptian2026);
+            renderMovies('egyptianClassicGrid', moviesData.egyptianClassic);
+        });
+    </script>
+</body>
+</html>

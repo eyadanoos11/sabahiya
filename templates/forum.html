@@ -3,133 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منتدى سباهية</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&family=Aref+Ruqaa:wght@400;700&display=swap" rel="stylesheet">
+    <title>الدردشة - سباهية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Tajawal', sans-serif; margin: 0; color: #333; direction: rtl; background: linear-gradient(135deg, #1a3c34 0%, #2e5d4a 50%, #d4af37 100%); }
-        .navbar { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.6); padding: 15px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(5px); }
-        
-        /* الشعار مع الصورة والوميض */
-        .logo { display: flex; align-items: center; }
-        .logo-container { display: flex; flex-direction: column; align-items: center; }
-        .logo-img { width: 70px; height: 70px; object-fit: cover; border-radius: 50%; border: 2px solid #ff0000; }
-        .blink-red { width: 6px !important; height: 6px !important; border-radius: 50%; background-color: red; display: inline-block; margin-top: 5px; animation: blink 1s infinite; box-shadow: 0 0 10px red; }
+        body { font-family: 'Tajawal', sans-serif; margin: 0; background: linear-gradient(135deg, #1a3c34 0%, #2e5d4a 50%, #d4af37 100%); color: white; direction: rtl; min-height: 100vh; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.85); padding: 15px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.5); position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 22px; font-weight: bold; color: #d4af37; display: flex; align-items: center; gap: 10px; }
+        .logo-img { width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 2px solid #ff0000; }
+        .blink-red { width: 6px; height: 6px; border-radius: 50%; background-color: red; display: inline-block; margin-left: 5px; animation: blink 1s infinite; box-shadow: 0 0 5px red; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-        
-        .menu-btn { background: none; border: none; font-size: 30px; cursor: pointer; color: #d4af37; order: -1; }
-        
-        .sidebar { position: fixed; top: 0; left: -250px; width: 250px; height: 100%; background: #1a3c34; color: white; transition: left 0.3s ease; z-index: 200; box-shadow: 2px 0 10px rgba(0,0,0,0.5); padding: 20px; box-sizing: border-box; }
+        .menu-btn { background: none; border: none; font-size: 30px; cursor: pointer; color: #d4af37; }
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: #1a3c34; color: white; transition: left 0.3s ease; z-index: 200; box-shadow: 2px 0 10px rgba(0,0,0,0.5); padding: 20px; box-sizing: border-box; overflow-y: auto; }
         .sidebar.open { left: 0; }
-        .sidebar a { color: white; text-decoration: none; font-size: 18px; font-weight: bold; display: block; padding: 10px; border-radius: 8px; }
+        .sidebar h2 { color: #d4af37; margin-top: 0; }
+        .sidebar ul { list-style: none; padding: 0; }
+        .sidebar a { color: white; text-decoration: none; font-size: 18px; font-weight: bold; display: block; padding: 10px; border-radius: 8px; margin-bottom: 5px; }
         .sidebar a:hover { background: #d4af37; color: black; }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 150; display: none; }
         .overlay.show { display: block; }
-
-        .forum-container { max-width: 700px; margin: 20px auto; padding: 20px; background: rgba(255,255,255,0.95); border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        textarea { width: 100%; background: #f9f9f9; color: #333; border: 1px solid #ddd; border-radius: 8px; padding: 15px; font-family: 'Tajawal', sans-serif; font-size: 16px; box-sizing: border-box; }
-        button { background: #d4af37; color: black; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; }
-        .post { background: #f9f9f9; padding: 10px !important; margin-bottom: 15px; border-radius: 10px; border: 2px solid #1a3c34; }
-        .username { color: #2e7d32; font-weight: bold; font-size: 14px !important; margin-bottom: 5px; }
-        .content { color: #333; font-size: 13px !important; line-height: 1.6; }
-        .posts-scroll { max-height: 400px; overflow-y: auto; margin-top: 20px; }
-    
-/* ===== تنسيقات الراديو في القائمة الجانبية ===== */
-.radio-station-btn {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 5px;
-    background: #2e5d4a;
-    color: white;
-    border: 1px solid #d4af37;
-    border-radius: 6px;
-    cursor: pointer;
-    font-family: 'Tajawal', sans-serif;
-    font-size: 12px;
-    text-align: right;
-    transition: all 0.2s;
-}
-.radio-station-btn:hover { background: #3d7d64; }
-.radio-station-btn.active { background: #d4af37; color: #1a3c34; font-weight: bold; }
-
-</style>
+        .container { max-width: 800px; margin: 20px auto; padding: 15px; }
+        .page-title { text-align: center; color: #d4af37; font-size: 32px; margin: 10px 0 25px; }
+        .write-box { background: rgba(0,0,0,0.6); border: 2px solid #d4af37; border-radius: 15px; padding: 15px; margin-bottom: 25px; }
+        .write-box textarea { width: 100%; background: #222; color: white; border: 1px solid #555; border-radius: 10px; padding: 12px; font-family: 'Tajawal', sans-serif; font-size: 16px; box-sizing: border-box; resize: none; min-height: 80px; }
+        .write-box textarea:focus { outline: none; border-color: #d4af37; }
+        .write-box button { background: linear-gradient(45deg, #d4af37, #b8860b); color: black; border: none; padding: 10px 25px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; width: 100%; }
+        
+        .post { background: rgba(0,0,0,0.5); border: 1px solid #2e5d4a; border-radius: 15px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .post-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .post-username { color: #00ff00; font-weight: bold; font-size: 16px; }
+        .post-time { color: #888; font-size: 12px; }
+        .post-content { color: white; font-size: 16px; line-height: 1.7; margin-bottom: 12px; word-wrap: break-word; }
+        
+        .post-actions { display: flex; gap: 15px; padding-top: 10px; border-top: 1px solid rgba(212,175,55,0.2); }
+        .action-btn { background: transparent; border: 1px solid #d4af37; color: #d4af37; padding: 6px 15px; border-radius: 20px; cursor: pointer; font-size: 14px; font-family: 'Tajawal', sans-serif; display: flex; align-items: center; gap: 5px; transition: all 0.2s; }
+        .action-btn:hover { background: #d4af37; color: black; }
+        .action-btn.liked { background: #ff4757; color: white; border-color: #ff4757; }
+        .action-btn form { display: inline; }
+        
+        .comments-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(212,175,55,0.2); }
+        .comment { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-bottom: 8px; }
+        .comment-username { color: #00ff00; font-weight: bold; font-size: 14px; margin-bottom: 3px; }
+        .comment-text { color: #ddd; font-size: 14px; }
+        .comment-time { color: #888; font-size: 11px; margin-top: 3px; }
+        .comment-form { display: flex; gap: 8px; margin-top: 10px; }
+        .comment-form input { flex: 1; background: #222; color: white; border: 1px solid #555; border-radius: 8px; padding: 8px; font-family: 'Tajawal', sans-serif; font-size: 14px; }
+        .comment-form button { background: #d4af37; color: black; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; }
+    </style>
 </head>
 <body>
     <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
     <div class="sidebar" id="sidebar">
-        <h2 style="color:#d4af37;">القائمة <span class="blink-red"></span></h2>
-        <ul style="list-style:none; padding:0;">
-            <li style="margin-bottom:15px;">
-                <a href="#" onclick="toggleBuyOptions(event)" style="display:flex; justify-content:space-between; align-items:center; background:#d4af37; color:black; padding:12px; border-radius:8px; font-weight:bold; text-decoration:none;">
-                    <span>🛒 اشتري الرخام</span>
-                    <span style="font-size:12px;">▼</span>
-                </a>
-                <ul id="buyOptions" style="display:none; list-style:none; padding-right:0; margin-top:10px;">
-                    <li style="margin-bottom:8px;">
-                        <a href="https://wa.me/963995600240?text=مرحباً، أريد شراء مطبخ رخام" target="_blank" style="background:#2e7d32; color:white; padding:10px; border-radius:8px; font-size:14px; display:block; text-align:center; text-decoration:none; font-weight:bold;">
-                            🍽️ شراء مطبخ
-                        </a>
-                    </li>
-                    <li>
-                        <a href="https://wa.me/963995600240?text=مرحباً، أريد إعلان معمل الرخام في الموقع" target="_blank" style="background:#1565c0; color:white; padding:10px; border-radius:8px; font-size:14px; display:block; text-align:center; text-decoration:none; font-weight:bold;">
-                            📢 إعلان أصحاب المعامل
-                        </a>
-                    </li>
-                </ul>
-            </li>
-            <li style="margin-bottom:15px;"><a href="/radio" style="color:white; text-decoration:none; font-size:18px; font-weight:bold; display:block; padding:10px;">📻 الراديو</a></li>
-            <li style="margin-bottom:15px;"><a href="/" style="color:white; text-decoration:none; font-size:18px; font-weight:bold; display:block; padding:10px;">🏠 الصفحة الرئيسية</a></li>
-            <li style="margin-bottom:15px;"><a href="/exchange_rate" style="color:white; text-decoration:none; font-size:18px; font-weight:bold; display:block; padding:10px;">💱 سعر الصرف</a></li><li><a href="/forum" style="color:white; text-decoration:none; font-size:18px; font-weight:bold; display:block; padding:10px;">💬 المنتدى <span class="blink-red"></span></a></li>
-            <li><a href="/logout" style="color:white; text-decoration:none; font-size:18px; font-weight:bold; display:block; padding:10px;">🚪 تسجيل الخروج</a></li>
+        <h2>القائمة <span class="blink-red"></span></h2>
+        <ul>
+            <li><a href="/">🏠 الصفحة الرئيسية</a></li>
+            <li><a href="/forum" style="background:#d4af37; color:black;">💬 الدردشة <span class="blink-red"></span></a></li>
+            <li><a href="/radio">📻 الراديو</a></li>
+            <li><a href="/exchange_rate">💱 سعر الصرف</a></li>
+            <li><a href="/logout">🚪 تسجيل الخروج</a></li>
         </ul>
     </div>
-
     <div class="navbar">
         <div class="logo">
-            <div class="logo-container">
-                <img src="https://lh3.googleusercontent.com/d/1gexLxzMHdjndfzzl7Wo9w8PPBC29GKFU" class="logo-img">
-                <span class="blink-red"></span>
-            </div>
+            <img src="https://lh3.googleusercontent.com/d/1gexLxzMHdjndfzzl7Wo9w8PPBC29GKFU" class="logo-img">
+            <span>سباهية - الدردشة</span>
         </div>
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
     </div>
 
-    <div class="forum-container">
-        <form action="/forum" method="post">
-            <textarea name="content" rows="5" placeholder="اكتب رسالتك هنا..." required></textarea>
-            <br>
-            <button type="submit">نشر</button>
-        </form>
+    <div class="container">
+        <h1 class="page-title">💬 دردشة سباهية</h1>
 
-        <div class="posts-scroll">
-            {% for post in posts %}
-            <div class="post">
-                <div class="username">👤 {{ post.username }}</div>
-                <div class="content">{{ post.content }}</div>
-            </div>
-            {% else %}
-            <p style="text-align:center; color:#888;">لا توجد منشورات بعد.</p>
-            {% endfor %}
+        <div class="write-box">
+            <form action="/forum" method="post">
+                <textarea name="content" placeholder="شاركنا رأيك أو سؤالك..." required></textarea>
+                <button type="submit">📤 نشر</button>
+            </form>
         </div>
+
+        {% for post in posts %}
+        <div class="post">
+            <div class="post-header">
+                <div class="post-username">👤 {{ post.username }}</div>
+                <div class="post-time">🕐 {{ post.time }}</div>
+            </div>
+            <div class="post-content">{{ post.content }}</div>
+            
+            <div class="post-actions">
+                <form action="/forum/like/{{ post.original_index }}" method="post" style="display:inline;">
+                    <button type="submit" class="action-btn {% if post.liked_by_user %}liked{% endif %}">
+                        {% if post.liked_by_user %}❤️{% else %}🤍{% endif %} {{ post.likes_count }}
+                    </button>
+                </form>
+                <button class="action-btn" onclick="document.getElementById('comments_{{ post.original_index }}').style.display = (document.getElementById('comments_{{ post.original_index }}').style.display === 'none') ? 'block' : 'none';">
+                    💬 {{ post.comments_count }}
+                </button>
+            </div>
+
+            <div class="comments-section" id="comments_{{ post.original_index }}" style="display: {% if post.comments_count > 0 %}block{% else %}none{% endif %};">
+                {% for comment in post.comments %}
+                <div class="comment">
+                    <div class="comment-username">👤 {{ comment.username }}</div>
+                    <div class="comment-text">{{ comment.text }}</div>
+                    <div class="comment-time">🕐 {{ comment.time }}</div>
+                </div>
+                {% endfor %}
+                
+                <form action="/forum/comment/{{ post.original_index }}" method="post" class="comment-form">
+                    <input type="text" name="comment" placeholder="اكتب تعليقاً..." required>
+                    <button type="submit">رد</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div style="text-align:center; padding:40px; color:#aaa;">
+            <p style="font-size:20px;">لا توجد منشورات بعد 🤷‍♂️</p>
+            <p>كن أول من يشارك في الدردشة!</p>
+        </div>
+        {% endfor %}
     </div>
 
     <script>
-        function toggleBuyOptions(event) { event.preventDefault(); const options = document.getElementById("buyOptions"); options.style.display = (options.style.display === "none" || options.style.display === "") ? "block" : "none"; } function toggleBuyOptions(event) { event.preventDefault(); const options = document.getElementById("buyOptions"); options.style.display = (options.style.display === "none" || options.style.display === "") ? "block" : "none"; } function toggleMenu() {
+        function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('show');
         }
-    
-        function toggleRadioPanel(event) {
-            event.preventDefault();
-            const panel = document.getElementById('radioPanel');
-            panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
-        }
-        function playRadio(url, btn) {
-            const audio = document.getElementById('radioAudio');
-            document.querySelectorAll('.radio-station-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            audio.src = url;
-            audio.play().catch(e => console.log('خطأ في التشغيل:', e));
-        }
-</script>
+    </script>
 </body>
 </html>
