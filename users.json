@@ -6,5 +6,10 @@
     "is_admin": true,
     "is_banned": false,
     "forum_banned": false
+  },
+  "098": {
+    "name": "مرام ",
+    "country": "سورية",
+    "password": "6d3732a2aa33447516537e0d6770d3fdf0cc05c4edbc3b2dec1efce4d3d736fc"
   }
 }
