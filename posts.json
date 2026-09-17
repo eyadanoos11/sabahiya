@@ -8,6 +8,13 @@
   },
   {
     "username": "مرام ",
-    "content": "مرحبا "
+    "content": "مرحبا ",
+    "likes": [],
+    "comments": [],
+    "time": ""
+  },
+  {
+    "username": "منى",
+    "content": "مرحبا منين انتو انا من سورية"
   }
 ]
