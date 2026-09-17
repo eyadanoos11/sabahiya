@@ -3,12 +3,16 @@ import json
 import os
 import time
 import hashlib
+from datetime import datetime, timezone, timedelta
 import random
 from fastapi import FastAPI, Request, Form, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+
+# توقيت سوريا (UTC+3)
+SYRIA_TZ = timezone(timedelta(hours=3))
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -256,7 +260,7 @@ async def get_usd_rate():
         return {
             "buy": buy_price,
             "sell": sell_price,
-            "last_updated": time.strftime("%Y-%m-%d %H:%M:%S")
+            "last_updated": datetime.now(SYRIA_TZ).strftime("%Y-%m-%d %H:%M:%S")
         }
     except Exception as e:
         return {"buy": "131.20", "sell": "131.70", "last_updated": "قيمة افتراضية"}
