@@ -1,6 +1,13 @@
 [
   {
     "username": "مرام ",
-    "content": "مرحبا ممكن اصدقاء"
+    "content": "مرحبا ممكن اصدقاء",
+    "likes": [],
+    "comments": [],
+    "time": ""
+  },
+  {
+    "username": "مرام ",
+    "content": "مرحبا "
   }
 ]
