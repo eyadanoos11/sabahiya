@@ -183,6 +183,24 @@
             }
         }
 
+        let currentMovieUrl = '';
+
+        function isRunningInApp() {
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            return /FBAN|FBAV|Instagram|Median|; wv\)|WebView|Android.*Version\/[0-9.]+/i.test(ua);
+        }
+
+        function watchMovie() {
+            if (!currentMovieUrl) return;
+            // إذا كنا داخل تطبيق، افتح الرابط في نفس النافذة (يبقى داخل التطبيق)
+            if (isRunningInApp()) {
+                window.location.href = currentMovieUrl;
+            } else {
+                // في المتصفح العادي، افتح في نافذة جديدة
+                window.open(currentMovieUrl, '_blank');
+            }
+        }
+
         function openModal(movie) {
             document.getElementById('modalTitle').textContent = movie.title;
             document.getElementById('modalInfo').innerHTML = `
