@@ -98,11 +98,29 @@ async def register_page(request: Request):
     return templates.TemplateResponse(request=request, name="register.html", context={})
 
 @app.post("/register")
-async def register_post(request: Request, name: str = Form(...), phone: str = Form(...), country: str = Form(...), password: str = Form(...)):
+async def register_post(request: Request, name: str = Form(...), phone: str = Form(...), country: str = Form(...), password: str = Form(...), referral_code: str = Form("")):
     users = load_users()
     if phone in users:
         return templates.TemplateResponse(request=request, name="register.html", context={"error": "هذا الرقم مسجل بالفعل"})
-    users[phone] = {"name": name, "country": country, "password": hash_password(password)}
+    import random, string
+    user_code = phone[-4:] + ''.join(random.choices(string.ascii_uppercase, k=3))
+    is_admin = True if len(users) == 0 else False
+    users[phone] = {
+        "name": name, "country": country, "password": hash_password(password),
+        "is_admin": is_admin, "is_banned": False, "forum_banned": False,
+        "referral_code": user_code, "referral_balance": 0,
+        "referrals": [], "referred_by": ""
+    }
+    if referral_code and referral_code.strip():
+        rc = referral_code.strip().upper()
+        for ref_phone, ref_user in users.items():
+            if ref_phone == phone:
+                continue
+            if ref_user.get("referral_code") == rc:
+                users[ref_phone]["referral_balance"] = ref_user.get("referral_balance", 0) + 5000
+                users[ref_phone]["referrals"] = ref_user.get("referrals", []) + [phone]
+                users[phone]["referred_by"] = ref_phone
+                break
     save_users(users)
     request.session["user"] = phone
     return RedirectResponse("/", status_code=303)
@@ -433,5 +451,14 @@ async def api_movie_poster(title: str, year: str = ""):
     return {"poster": poster}
 
 
+
+
+@app.get("/referral", response_class=HTMLResponse)
+async def referral_page(request: Request):
+    if not request.session.get("user"):
+        return RedirectResponse("/login", status_code=303)
+    users = load_users()
+    user = users.get(request.session["user"], {})
+    return templates.TemplateResponse(request=request, name="referral.html", context={"user": user, "users": users})
 
 uvicorn.run(app, host="0.0.0.0", port=port)
