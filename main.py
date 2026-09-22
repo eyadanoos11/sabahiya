@@ -433,17 +433,5 @@ async def api_movie_poster(title: str, year: str = ""):
     return {"poster": poster}
 
 
-@app.get("/movies_test", response_class=HTMLResponse)
-async def movies_test_page(request: Request):
-    return templates.TemplateResponse(request=request, name="movies_test.html", context={})
-
-
-@app.get("/movies", response_class=HTMLResponse)
-async def movies_page(request: Request):
-    if not request.session.get("user"):
-        return RedirectResponse("/login", status_code=303)
-    users = load_users()
-    user = users.get(request.session["user"], {})
-    return templates.TemplateResponse(request=request, name="movies.html", context={"user": user})
 
 uvicorn.run(app, host="0.0.0.0", port=port)
