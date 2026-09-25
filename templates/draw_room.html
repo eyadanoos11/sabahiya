@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>غرفة الرسم - سباهية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; -webkit-user-select: none; user-select: none; }
+        html, body { height: 100%; margin: 0; overflow: hidden; font-family: 'Tajawal', sans-serif; background: #0d1f1a; color: white; direction: rtl; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.9); padding: 8px 12px; border-bottom: 2px solid #d4af37; gap: 8px; flex-wrap: wrap; }
+        .room-info { font-size: 14px; font-weight: bold; color: #d4af37; }
+        .users-count { background: #2e5d4a; color: #d4af37; padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+        .exit-btn { background: #c62828; color: white; padding: 6px 14px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 12px; }
+        .toolbar { display: flex; gap: 8px; align-items: center; padding: 8px 12px; background: rgba(0,0,0,0.8); overflow-x: auto; }
+        .toolbar::-webkit-scrollbar { display: none; }
+        .color-btn { min-width: 34px; height: 34px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; flex-shrink: 0; }
+        .color-btn.active { border-color: white; transform: scale(1.15); }
+        .tool-btn { background: #2e5d4a; color: white; border: 1px solid #d4af37; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-family: 'Tajawal', sans-serif; font-size: 13px; font-weight: bold; white-space: nowrap; flex-shrink: 0; }
+        .tool-btn.active { background: #d4af37; color: black; }
+        .canvas-wrapper { position: relative; width: 100%; height: calc(100vh - 115px); }
+        canvas { display: block; width: 100%; height: 100%; background: white; touch-action: none; cursor: crosshair; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="room-info">🔒 كود الغرفة: <span style="background:#0d1f1a; padding:4px 10px; border-radius:6px; letter-spacing:2px;">{{ room_code }}</span></div>
+        <div class="users-count">🟢 متصلون: <span id="usersCount">1</span>/2</div>
+        <a href="/draw" class="exit-btn">✕ خروج</a>
+    </div>
+    <div class="toolbar">
+        <button class="color-btn active" data-color="#000000" style="background:#000000;" onclick="setColor(this, '#000000')"></button>
+        <button class="color-btn" data-color="#ff0000" style="background:#ff0000;" onclick="setColor(this, '#ff0000')"></button>
+        <button class="color-btn" data-color="#ff9800" style="background:#ff9800;" onclick="setColor(this, '#ff9800')"></button>
+        <button class="color-btn" data-color="#ffeb3b" style="background:#ffeb3b;" onclick="setColor(this, '#ffeb3b')"></button>
+        <button class="color-btn" data-color="#4caf50" style="background:#4caf50;" onclick="setColor(this, '#4caf50')"></button>
+        <button class="color-btn" data-color="#2196f3" style="background:#2196f3;" onclick="setColor(this, '#2196f3')"></button>
+        <button class="color-btn" data-color="#9c27b0" style="background:#9c27b0;" onclick="setColor(this, '#9c27b0')"></button>
+        <button class="color-btn" data-color="#ff69b4" style="background:#ff69b4;" onclick="setColor(this, '#ff69b4')"></button>
+        <button class="tool-btn" id="eraserBtn" onclick="toggleEraser()">🧽</button>
+        <button class="tool-btn" onclick="changeSize(2)">◾</button>
+        <button class="tool-btn" onclick="changeSize(5)">◼</button>
+        <button class="tool-btn" onclick="changeSize(12)">⬛</button>
+        <button class="tool-btn" style="background:#c62828; border-color:#c62828;" onclick="clearCanvas(true)">🗑️</button>
+    </div>
+    <div class="canvas-wrapper">
+        <canvas id="canvas"></canvas>
+    </div>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const ROOM_CODE = '{{ room_code }}';
+        let drawing = false, currentColor = '#000000', currentSize = 5, isEraser = false;
+        let lastX = 0, lastY = 0;
+        
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const ws = new WebSocket(protocol + '//' + window.location.host + '/ws/draw/' + ROOM_CODE);
+        
+        ws.onopen = function() { console.log('✅ متصل بالغرفة ' + ROOM_CODE); };
+        ws.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.type === 'count') {
+                document.getElementById('usersCount').textContent = data.count;
+                return;
+            }
+            if (data.type === 'clear') {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                return;
+            }
+            // رسم من الشريك
+            ctx.strokeStyle = data.eraser ? 'white' : data.color;
+            ctx.lineWidth = data.size;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(data.x1 * canvas.width, data.y1 * canvas.height);
+            ctx.lineTo(data.x2 * canvas.width, data.y2 * canvas.height);
+            ctx.stroke();
+        };
+        
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        window.addEventListener('resize', resizeCanvas);
+        
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const cX = e.touches ? e.touches[0].clientX : e.clientX;
+            const cY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: cX - rect.left, y: cY - rect.top };
+        }
+        
+        function startDrawing(e) { e.preventDefault(); drawing = true; const p = getPos(e); lastX = p.x; lastY = p.y; }
+        
+        function draw(e) {
+            if (!drawing) return;
+            e.preventDefault();
+            const p = getPos(e);
+            ctx.strokeStyle = isEraser ? 'white' : currentColor;
+            ctx.lineWidth = currentSize;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(p.x, p.y);
+            ctx.stroke();
+            
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'draw',
+                    x1: lastX / canvas.width, y1: lastY / canvas.height,
+                    x2: p.x / canvas.width, y2: p.y / canvas.height,
+                    color: currentColor, size: currentSize, eraser: isEraser
+                }));
+            }
+            lastX = p.x; lastY = p.y;
+        }
+        
+        function stopDrawing() { drawing = false; }
+        
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseleave', stopDrawing);
+        canvas.addEventListener('touchstart', startDrawing, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', stopDrawing);
+        
+        function setColor(btn, color) {
+            currentColor = color; isEraser = false;
+            document.getElementById('eraserBtn').classList.remove('active');
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+        function toggleEraser() { isEraser = !isEraser; document.getElementById('eraserBtn').classList.toggle('active', isEraser); }
+        function changeSize(s) { currentSize = s; }
+        function clearCanvas(broadcast) {
+            if (!confirm('مسح اللوحة بالكامل؟')) return;
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            if (broadcast && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'clear' }));
+            }
+        }
+        window.onload = resizeCanvas;
+    </script>
+</body>
+</html>

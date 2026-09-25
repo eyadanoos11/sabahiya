@@ -5,7 +5,7 @@ import time
 import hashlib
 from datetime import datetime, timezone, timedelta
 import random
-from fastapi import FastAPI, Request, Form, UploadFile, File
+from fastapi import FastAPI, Request, Form, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
@@ -460,5 +460,91 @@ async def referral_page(request: Request):
     users = load_users()
     user = users.get(request.session["user"], {})
     return templates.TemplateResponse(request=request, name="referral.html", context={"user": user, "users": users})
+
+
+
+# ==== غرف الرسم الخاصة (بين شخصين) ====
+import random
+import string
+
+draw_rooms = {}  # {room_code: set(websockets)}
+
+def generate_room_code():
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+@app.get("/draw", response_class=HTMLResponse)
+async def draw_landing(request: Request):
+    if not request.session.get("user"):
+        return RedirectResponse("/login", status_code=303)
+    users = load_users()
+    user = users.get(request.session["user"], {})
+    return templates.TemplateResponse(request=request, name="draw.html", context={"user": user})
+
+@app.post("/draw/create")
+async def draw_create(request: Request):
+    if not request.session.get("user"):
+        return RedirectResponse("/login", status_code=303)
+    code = generate_room_code()
+    while code in draw_rooms:
+        code = generate_room_code()
+    draw_rooms[code] = set()
+    return RedirectResponse(f"/draw/room/{code}", status_code=303)
+
+@app.post("/draw/join")
+async def draw_join(request: Request, room_code: str = Form(...)):
+    if not request.session.get("user"):
+        return RedirectResponse("/login", status_code=303)
+    code = room_code.strip().upper()
+    if code in draw_rooms:
+        return RedirectResponse(f"/draw/room/{code}", status_code=303)
+    else:
+        users = load_users()
+        user = users.get(request.session["user"], {})
+        return templates.TemplateResponse(request=request, name="draw.html", context={"user": user, "error": "❌ هذا الكود غير موجود أو الغرفة مغلقة"})
+
+@app.get("/draw/room/{code}", response_class=HTMLResponse)
+async def draw_room(request: Request, code: str):
+    if not request.session.get("user"):
+        return RedirectResponse("/login", status_code=303)
+    code = code.upper()
+    if code not in draw_rooms:
+        draw_rooms[code] = set()
+    users = load_users()
+    user = users.get(request.session["user"], {})
+    return templates.TemplateResponse(request=request, name="draw_room.html", context={"user": user, "room_code": code})
+
+@app.websocket("/ws/draw/{code}")
+async def websocket_draw_room(websocket: WebSocket, code: str):
+    code = code.upper()
+    if code not in draw_rooms:
+        draw_rooms[code] = set()
+    room = draw_rooms[code]
+    await websocket.accept()
+    room.add(websocket)
+    try:
+        # إخبار الجميع بعدد المتصلين
+        for client in room:
+            try:
+                await client.send_json({"type": "count", "count": len(room)})
+            except:
+                pass
+        while True:
+            data = await websocket.receive_json()
+            # بث للموجودين في نفس الغرفة فقط
+            for client in room:
+                if client != websocket:
+                    try:
+                        await client.send_json(data)
+                    except:
+                        pass
+    except WebSocketDisconnect:
+        room.discard(websocket)
+        for client in room:
+            try:
+                await client.send_json({"type": "count", "count": len(room)})
+            except:
+                pass
+        if len(room) == 0:
+            draw_rooms.pop(code, None)
 
 uvicorn.run(app, host="0.0.0.0", port=port)
