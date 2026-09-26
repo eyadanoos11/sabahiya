@@ -4,107 +4,247 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>غرفة الرسم - سباهية</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700;900&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; -webkit-user-select: none; user-select: none; }
-        html, body { height: 100%; margin: 0; overflow: hidden; font-family: 'Tajawal', sans-serif; background: #0d1f1a; color: white; direction: rtl; }
-        .topbar { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.9); padding: 8px 12px; border-bottom: 2px solid #d4af37; gap: 8px; flex-wrap: wrap; }
-        .room-info { font-size: 14px; font-weight: bold; color: #d4af37; }
-        .users-count { background: #2e5d4a; color: #d4af37; padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
-        .exit-btn { background: #c62828; color: white; padding: 6px 14px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 12px; }
-        .toolbar { display: flex; gap: 8px; align-items: center; padding: 8px 12px; background: rgba(0,0,0,0.8); overflow-x: auto; }
-        .toolbar::-webkit-scrollbar { display: none; }
-        .color-btn { min-width: 34px; height: 34px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; flex-shrink: 0; }
-        .color-btn.active { border-color: white; transform: scale(1.15); }
-        .tool-btn { background: #2e5d4a; color: white; border: 1px solid #d4af37; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-family: 'Tajawal', sans-serif; font-size: 13px; font-weight: bold; white-space: nowrap; flex-shrink: 0; }
+        * { box-sizing: border-box; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; margin: 0; overflow: hidden; font-family: 'Tajawal', sans-serif; direction: rtl; }
+        
+        .lock-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; overflow: hidden; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; touch-action: none; cursor: crosshair; background: white; }
+        
+        /* الساعة الحقيقية */
+        .clock-container { position: absolute; top: 30px; left: 0; right: 0; text-align: center; z-index: 10; pointer-events: none; transition: opacity 0.3s; }
+        .clock-time { font-size: 84px; font-weight: 300; color: #1a3c34; margin: 0; line-height: 1; letter-spacing: -2px; text-shadow: 0 2px 10px rgba(255,255,255,0.9); font-variant-numeric: tabular-nums; }
+        .clock-seconds { font-size: 22px; color: #d4af37; vertical-align: top; margin-right: 5px; }
+        .clock-date { font-size: 17px; color: #666; margin-top: 5px; font-weight: 500; }
+        .clock-status { font-size: 13px; color: #2e7d32; margin-top: 10px; background: rgba(46,125,50,0.1); display: inline-block; padding: 5px 15px; border-radius: 15px; font-weight: bold; }
+        .clock-status.offline { color: #c62828; background: rgba(198,40,40,0.1); }
+        
+        .room-badge { position: absolute; top: 15px; left: 15px; background: rgba(26,60,52,0.9); color: #d4af37; padding: 8px 14px; border-radius: 20px; font-size: 12px; font-weight: bold; z-index: 20; letter-spacing: 2px; }
+        .exit-corner { position: absolute; top: 15px; right: 15px; background: rgba(198,40,40,0.9); color: white; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 20; font-size: 20px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        
+        .bottom-toolbar { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(20,20,20,0.96); backdrop-filter: blur(20px); padding: 12px 10px 18px; z-index: 30; transform: translateY(0); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); border-top-left-radius: 25px; border-top-right-radius: 25px; box-shadow: 0 -5px 30px rgba(0,0,0,0.3); max-height: 55vh; overflow-y: auto; }
+        .bottom-toolbar.hidden { transform: translateY(calc(100% + 5px)); }
+        .bottom-toolbar::-webkit-scrollbar { height: 0; width: 0; }
+        
+        .toolbar-handle { width: 50px; height: 5px; background: #555; border-radius: 5px; margin: 0 auto 12px; cursor: pointer; }
+        
+        .colors-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+        .color-btn { width: 34px; height: 34px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+        .color-btn.active { border-color: white; transform: scale(1.2); box-shadow: 0 0 15px currentColor; }
+        
+        .emoji-row { display: flex; gap: 4px; padding: 5px 0 10px; overflow-x: auto; margin-bottom: 8px; }
+        .emoji-row::-webkit-scrollbar { display: none; }
+        .emoji-btn { font-size: 24px; cursor: pointer; padding: 5px; border-radius: 10px; transition: all 0.2s; flex-shrink: 0; user-select: none; }
+        .emoji-btn.placing { background: #d4af37; transform: scale(1.25); box-shadow: 0 0 15px #d4af37; }
+        
+        .tools-row { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+        .tool-btn { background: #2e5d4a; color: white; border: 1px solid #d4af37; padding: 7px 12px; border-radius: 20px; cursor: pointer; font-family: 'Tajawal', sans-serif; font-size: 12px; font-weight: bold; white-space: nowrap; transition: all 0.2s; }
         .tool-btn.active { background: #d4af37; color: black; }
-        .canvas-wrapper { position: relative; width: 100%; height: calc(100vh - 115px); }
-        canvas { display: block; width: 100%; height: 100%; background: white; touch-action: none; cursor: crosshair; }
+        .tool-btn.danger { background: #c62828; border-color: #c62828; }
+        
+        .show-hint { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(26,60,52,0.9); color: #d4af37; padding: 10px 20px; border-radius: 25px; font-size: 13px; font-weight: bold; z-index: 25; cursor: pointer; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        .show-hint.visible { opacity: 1; pointer-events: auto; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } }
     </style>
 </head>
 <body>
-    <div class="topbar">
-        <div class="room-info">🔒 كود الغرفة: <span style="background:#0d1f1a; padding:4px 10px; border-radius:6px; letter-spacing:2px;">{{ room_code }}</span></div>
-        <div class="users-count">🟢 متصلون: <span id="usersCount">1</span>/2</div>
-        <a href="/draw" class="exit-btn">✕ خروج</a>
-    </div>
-    <div class="toolbar">
-        <button class="color-btn active" data-color="#000000" style="background:#000000;" onclick="setColor(this, '#000000')"></button>
-        <button class="color-btn" data-color="#ff0000" style="background:#ff0000;" onclick="setColor(this, '#ff0000')"></button>
-        <button class="color-btn" data-color="#ff9800" style="background:#ff9800;" onclick="setColor(this, '#ff9800')"></button>
-        <button class="color-btn" data-color="#ffeb3b" style="background:#ffeb3b;" onclick="setColor(this, '#ffeb3b')"></button>
-        <button class="color-btn" data-color="#4caf50" style="background:#4caf50;" onclick="setColor(this, '#4caf50')"></button>
-        <button class="color-btn" data-color="#2196f3" style="background:#2196f3;" onclick="setColor(this, '#2196f3')"></button>
-        <button class="color-btn" data-color="#9c27b0" style="background:#9c27b0;" onclick="setColor(this, '#9c27b0')"></button>
-        <button class="color-btn" data-color="#ff69b4" style="background:#ff69b4;" onclick="setColor(this, '#ff69b4')"></button>
-        <button class="tool-btn" id="eraserBtn" onclick="toggleEraser()">🧽</button>
-        <button class="tool-btn" onclick="changeSize(2)">◾</button>
-        <button class="tool-btn" onclick="changeSize(5)">◼</button>
-        <button class="tool-btn" onclick="changeSize(12)">⬛</button>
-        <button class="tool-btn" style="background:#c62828; border-color:#c62828;" onclick="clearCanvas(true)">🗑️</button>
-    </div>
-    <div class="canvas-wrapper">
+    <div class="lock-screen">
         <canvas id="canvas"></canvas>
+        
+        <div class="clock-container" id="clockContainer">
+            <div class="clock-time" id="clockTime">
+                <span id="clockHours">00</span>:<span id="clockMinutes">00</span><span class="clock-seconds" id="clockSeconds">:00</span>
+            </div>
+            <div class="clock-date" id="clockDate">التاريخ</div>
+            <div class="clock-status" id="clockStatus">🟢 متصلون: 1/2</div>
+        </div>
+        
+        <div class="room-badge">🔒 {{ room_code }}</div>
+        <a href="/draw" class="exit-corner">✕</a>
+        <div class="show-hint" id="showHint">⬆️ اضغط لإظهار الأدوات</div>
+        
+        <div class="bottom-toolbar" id="bottomToolbar">
+            <div class="toolbar-handle" onclick="toggleToolbar()"></div>
+            
+            <div class="colors-row">
+                <button class="color-btn active" style="background:#000000;" onclick="setColor(this, '#000000')"></button>
+                <button class="color-btn" style="background:#1a3c34;" onclick="setColor(this, '#1a3c34')"></button>
+                <button class="color-btn" style="background:#ff0000;" onclick="setColor(this, '#ff0000')"></button>
+                <button class="color-btn" style="background:#ff5722;" onclick="setColor(this, '#ff5722')"></button>
+                <button class="color-btn" style="background:#ff9800;" onclick="setColor(this, '#ff9800')"></button>
+                <button class="color-btn" style="background:#ffeb3b;" onclick="setColor(this, '#ffeb3b')"></button>
+                <button class="color-btn" style="background:#8bc34a;" onclick="setColor(this, '#8bc34a')"></button>
+                <button class="color-btn" style="background:#4caf50;" onclick="setColor(this, '#4caf50')"></button>
+                <button class="color-btn" style="background:#00bcd4;" onclick="setColor(this, '#00bcd4')"></button>
+                <button class="color-btn" style="background:#2196f3;" onclick="setColor(this, '#2196f3')"></button>
+                <button class="color-btn" style="background:#3f51b5;" onclick="setColor(this, '#3f51b5')"></button>
+                <button class="color-btn" style="background:#9c27b0;" onclick="setColor(this, '#9c27b0')"></button>
+                <button class="color-btn" style="background:#e91e63;" onclick="setColor(this, '#e91e63')"></button>
+                <button class="color-btn" style="background:#ff69b4;" onclick="setColor(this, '#ff69b4')"></button>
+                <button class="color-btn" style="background:#795548;" onclick="setColor(this, '#795548')"></button>
+                <button class="color-btn" style="background:#d4af37;" onclick="setColor(this, '#d4af37')"></button>
+                <button class="color-btn" style="background:#9e9e9e;" onclick="setColor(this, '#9e9e9e')"></button>
+                <button class="color-btn" style="background:#ffffff; border-color:#ccc;" onclick="setColor(this, '#ffffff')"></button>
+            </div>
+            
+            <div class="emoji-row" id="emojiRow">
+                <span class="emoji-btn" onclick="placeEmoji('❤️', this)">❤️</span>
+                <span class="emoji-btn" onclick="placeEmoji('💛', this)">💛</span>
+                <span class="emoji-btn" onclick="placeEmoji('💚', this)">💚</span>
+                <span class="emoji-btn" onclick="placeEmoji('💙', this)">💙</span>
+                <span class="emoji-btn" onclick="placeEmoji('💜', this)">💜</span>
+                <span class="emoji-btn" onclick="placeEmoji('⭐', this)">⭐</span>
+                <span class="emoji-btn" onclick="placeEmoji('🌟', this)">🌟</span>
+                <span class="emoji-btn" onclick="placeEmoji('✨', this)">✨</span>
+                <span class="emoji-btn" onclick="placeEmoji('🔥', this)">🔥</span>
+                <span class="emoji-btn" onclick="placeEmoji('🌈', this)">🌈</span>
+                <span class="emoji-btn" onclick="placeEmoji('☀️', this)">☀️</span>
+                <span class="emoji-btn" onclick="placeEmoji('🌸', this)">🌸</span>
+                <span class="emoji-btn" onclick="placeEmoji('🌺', this)">🌺</span>
+                <span class="emoji-btn" onclick="placeEmoji('🦋', this)">🦋</span>
+                <span class="emoji-btn" onclick="placeEmoji('😀', this)">😀</span>
+                <span class="emoji-btn" onclick="placeEmoji('😂', this)">😂</span>
+                <span class="emoji-btn" onclick="placeEmoji('😍', this)">😍</span>
+                <span class="emoji-btn" onclick="placeEmoji('😎', this)">😎</span>
+                <span class="emoji-btn" onclick="placeEmoji('🥰', this)">🥰</span>
+                <span class="emoji-btn" onclick="placeEmoji('😢', this)">😢</span>
+                <span class="emoji-btn" onclick="placeEmoji('😡', this)">😡</span>
+                <span class="emoji-btn" onclick="placeEmoji('👍', this)">👍</span>
+                <span class="emoji-btn" onclick="placeEmoji('👎', this)">👎</span>
+                <span class="emoji-btn" onclick="placeEmoji('🎉', this)">🎉</span>
+                <span class="emoji-btn" onclick="placeEmoji('🎁', this)">🎁</span>
+                <span class="emoji-btn" onclick="placeEmoji('🏆', this)">🏆</span>
+                <span class="emoji-btn" onclick="placeEmoji('💯', this)">💯</span>
+                <span class="emoji-btn" onclick="placeEmoji('🌹', this)">🌹</span>
+                <span class="emoji-btn" onclick="placeEmoji('🌙', this)">🌙</span>
+                <span class="emoji-btn" onclick="placeEmoji('⚽', this)">⚽</span>
+            </div>
+            
+            <div class="tools-row">
+                <button class="tool-btn" id="eraserBtn" onclick="toggleEraser()">🧽 ممحاة</button>
+                <button class="tool-btn" onclick="changeSize(2); setActiveSize(this)">◾ رفيع</button>
+                <button class="tool-btn active" onclick="changeSize(5); setActiveSize(this)">◼ متوسط</button>
+                <button class="tool-btn" onclick="changeSize(15); setActiveSize(this)">⬛ سميك</button>
+                <button class="tool-btn" onclick="undoLast()">↩️ تراجع</button>
+                <button class="tool-btn" onclick="saveImage()">💾 حفظ</button>
+                <button class="tool-btn danger" onclick="clearCanvas()">🗑️ مسح</button>
+            </div>
+        </div>
     </div>
+    
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const ROOM_CODE = '{{ room_code }}';
         let drawing = false, currentColor = '#000000', currentSize = 5, isEraser = false;
         let lastX = 0, lastY = 0;
+        let ws = null;
+        let pendingPoints = [];
+        let toolbarHidden = false;
+        let hideTimer = null;
+        let placingEmoji = null;
+        let drawingHistory = [];
         
+        // ========== الساعة الحقيقية ==========
+        function updateClock() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            
+            document.getElementById('clockHours').textContent = h;
+            document.getElementById('clockMinutes').textContent = m;
+            document.getElementById('clockSeconds').textContent = ':' + s;
+            
+            const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+            const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+            document.getElementById('clockDate').textContent = days[now.getDay()] + '، ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+        
+        // ========== WebSocket ==========
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const ws = new WebSocket(protocol + '//' + window.location.host + '/ws/draw/' + ROOM_CODE);
         
-        ws.onopen = function() { 
-            console.log('✅ WebSocket مفتوح - الغرفة: ' + ROOM_CODE);
-            console.log('URL: ' + ws.url);
-        };
-        ws.onerror = function(e) { 
-            console.error('❌ خطأ WebSocket:', e);
-            alert('خطأ في الاتصال. تحقق من الإنترنت.');
-        };
-        ws.onclose = function(e) { 
-            console.warn('⚠️ WebSocket مغلق. كود: ' + e.code + ' - السبب: ' + e.reason);
-        };
-        function drawRemote(data) {
-            ctx.strokeStyle = data.eraser ? 'white' : data.color;
-            ctx.lineWidth = data.size;
+        function connect() {
+            ws = new WebSocket(protocol + '//' + window.location.host + '/ws/draw/' + ROOM_CODE);
+            
+            ws.onopen = function() {
+                console.log('✅ متصل');
+                const st = document.getElementById('clockStatus');
+                st.classList.remove('offline');
+                st.textContent = '🟢 متصلون';
+            };
+            
+            ws.onmessage = function(e) {
+                let data;
+                try { data = JSON.parse(e.data); } catch { return; }
+                
+                if (data.type === 'count') {
+                    document.getElementById('clockStatus').textContent = '🟢 متصلون: ' + data.count + '/2';
+                    return;
+                }
+                if (data.type === 'clear') {
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    return;
+                }
+                if (data.type === 'batch') {
+                    data.points.forEach(p => drawRemote(p));
+                    return;
+                }
+                if (data.type === 'draw') {
+                    drawRemote(data);
+                    return;
+                }
+                if (data.type === 'emoji') {
+                    ctx.font = data.size + 'px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(data.emoji, data.x * canvas.width, data.y * canvas.height);
+                    return;
+                }
+            };
+            
+            ws.onclose = function() {
+                const st = document.getElementById('clockStatus');
+                st.textContent = '🔴 انقطع الاتصال...';
+                st.classList.add('offline');
+                setTimeout(connect, 2000);
+            };
+        }
+        
+        function drawRemote(p) {
+            ctx.strokeStyle = p.eraser ? 'white' : p.color;
+            ctx.lineWidth = p.size;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             ctx.beginPath();
-            ctx.moveTo(data.x1 * canvas.width, data.y1 * canvas.height);
-            ctx.lineTo(data.x2 * canvas.width, data.y2 * canvas.height);
+            ctx.moveTo(p.x1 * canvas.width, p.y1 * canvas.height);
+            ctx.lineTo(p.x2 * canvas.width, p.y2 * canvas.height);
             ctx.stroke();
         }
         
-        ws.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            if (data.type === 'count') {
-                document.getElementById('usersCount').textContent = data.count;
-                return;
+        // إرسال دوري كل 60ms
+        setInterval(() => {
+            if (pendingPoints.length > 0 && ws && ws.readyState === WebSocket.OPEN) {
+                try {
+                    ws.send(JSON.stringify({ type: 'batch', points: pendingPoints }));
+                } catch(e) {}
+                pendingPoints = [];
             }
-            if (data.type === 'clear') {
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                return;
-            }
-            // رسم من الشريك
-            ctx.strokeStyle = data.eraser ? 'white' : data.color;
-            ctx.lineWidth = data.size;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.beginPath();
-            ctx.moveTo(data.x1 * canvas.width, data.y1 * canvas.height);
-            ctx.lineTo(data.x2 * canvas.width, data.y2 * canvas.height);
-            ctx.stroke();
-        };
+        }, 60);
         
+        // ========== Canvas ==========
         function resizeCanvas() {
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
+            let savedData = null;
+            try { savedData = ctx.getImageData(0, 0, canvas.width, canvas.height); } catch(e) {}
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            if (savedData) { try { ctx.putImageData(savedData, 0, 0); } catch(e) {} }
         }
         window.addEventListener('resize', resizeCanvas);
         
@@ -115,12 +255,52 @@
             return { x: cX - rect.left, y: cY - rect.top };
         }
         
-        function startDrawing(e) { e.preventDefault(); drawing = true; const p = getPos(e); lastX = p.x; lastY = p.y; }
+        function saveSnapshot() {
+            try {
+                drawingHistory.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+                if (drawingHistory.length > 20) drawingHistory.shift();
+            } catch(e) {}
+        }
+        
+        function startDrawing(e) {
+            e.preventDefault();
+            
+            // وضع الإيموجي
+            if (placingEmoji) {
+                const p = getPos(e);
+                saveSnapshot();
+                const size = currentSize * 6 + 20;
+                ctx.font = size + 'px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(placingEmoji, p.x, p.y);
+                
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    try {
+                        ws.send(JSON.stringify({
+                            type: 'emoji',
+                            emoji: placingEmoji,
+                            x: p.x / canvas.width,
+                            y: p.y / canvas.height,
+                            size: size
+                        }));
+                    } catch(err) {}
+                }
+                return;
+            }
+            
+            // الرسم العادي
+            saveSnapshot();
+            drawing = true;
+            const p = getPos(e);
+            lastX = p.x; lastY = p.y;
+        }
         
         function draw(e) {
-            if (!drawing) return;
+            if (!drawing || placingEmoji) return;
             e.preventDefault();
             const p = getPos(e);
+            
             ctx.strokeStyle = isEraser ? 'white' : currentColor;
             ctx.lineWidth = currentSize;
             ctx.lineCap = 'round';
@@ -130,13 +310,17 @@
             ctx.lineTo(p.x, p.y);
             ctx.stroke();
             
-            console.log('📤 محاولة إرسال، الحالة: ' + ws.readyState); if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    type: 'draw',
-                    x1: lastX / canvas.width, y1: lastY / canvas.height,
-                    x2: p.x / canvas.width, y2: p.y / canvas.height,
-                    color: currentColor, size: currentSize, eraser: isEraser
-                }));
+            pendingPoints.push({
+                x1: lastX / canvas.width, y1: lastY / canvas.height,
+                x2: p.x / canvas.width, y2: p.y / canvas.height,
+                color: currentColor, size: currentSize, eraser: isEraser
+            });
+            
+            if (pendingPoints.length >= 30) {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    try { ws.send(JSON.stringify({ type: 'batch', points: pendingPoints })); } catch(e) {}
+                    pendingPoints = [];
+                }
             }
             lastX = p.x; lastY = p.y;
         }
@@ -150,24 +334,116 @@
         canvas.addEventListener('touchstart', startDrawing, { passive: false });
         canvas.addEventListener('touchmove', draw, { passive: false });
         canvas.addEventListener('touchend', stopDrawing);
+        canvas.addEventListener('touchcancel', stopDrawing);
         
+        // ========== الشريط السفلي ==========
+        function toggleToolbar() {
+            const toolbar = document.getElementById('bottomToolbar');
+            const hint = document.getElementById('showHint');
+            toolbarHidden = !toolbarHidden;
+            if (toolbarHidden) {
+                toolbar.classList.add('hidden');
+                setTimeout(() => hint.classList.add('visible'), 400);
+            } else {
+                toolbar.classList.remove('hidden');
+                hint.classList.remove('visible');
+                resetHideTimer();
+            }
+        }
+        
+        document.getElementById('showHint').addEventListener('click', toggleToolbar);
+        
+        function resetHideTimer() {
+            if (hideTimer) clearTimeout(hideTimer);
+            hideTimer = setTimeout(() => { if (!toolbarHidden) toggleToolbar(); }, 7000);
+        }
+        
+        document.addEventListener('touchstart', (e) => {
+            const touchY = e.touches[0].clientY;
+            if (touchY > window.innerHeight - 100 && toolbarHidden) toggleToolbar();
+        }, { passive: true });
+        
+        // ========== الأدوات ==========
         function setColor(btn, color) {
-            currentColor = color; isEraser = false;
+            currentColor = color; isEraser = false; placingEmoji = null;
             document.getElementById('eraserBtn').classList.remove('active');
             document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('placing'));
             btn.classList.add('active');
         }
-        function toggleEraser() { isEraser = !isEraser; document.getElementById('eraserBtn').classList.toggle('active', isEraser); }
+        
+        function toggleEraser() {
+            isEraser = !isEraser;
+            if (isEraser) placingEmoji = null;
+            document.getElementById('eraserBtn').classList.toggle('active', isEraser);
+            document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('placing'));
+        }
+        
         function changeSize(s) { currentSize = s; }
-        function clearCanvas(broadcast) {
-            if (!confirm('مسح اللوحة بالكامل؟')) return;
+        
+        function setActiveSize(btn) {
+            document.querySelectorAll('.tools-row .tool-btn').forEach(b => {
+                if (b.id !== 'eraserBtn' && !b.classList.contains('danger') && b.textContent.indexOf('تراجع') === -1 && b.textContent.indexOf('حفظ') === -1) {
+                    b.classList.remove('active');
+                }
+            });
+            btn.classList.add('active');
+        }
+        
+        function placeEmoji(emoji, btn) {
+            if (placingEmoji === emoji) {
+                placingEmoji = null;
+                btn.classList.remove('placing');
+            } else {
+                placingEmoji = emoji;
+                isEraser = false;
+                document.getElementById('eraserBtn').classList.remove('active');
+                document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('placing'));
+                document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('placing');
+            }
+        }
+        
+        function undoLast() {
+            if (drawingHistory.length === 0) return;
+            const prev = drawingHistory.pop();
+            ctx.putImageData(prev, 0, 0);
+        }
+        
+        function saveImage() {
+            try {
+                const link = document.createElement('a');
+                link.download = 'sabahiya_drawing_' + Date.now() + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } catch(e) { alert('فشل الحفظ'); }
+        }
+        
+        function clearCanvas() {
+            if (!confirm('مسح اللوحة بالكامل للجميع؟')) return;
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            if (broadcast && ws && ws.readyState === WebSocket.OPEN) {
+            drawingHistory = [];
+            if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ type: 'clear' }));
             }
         }
-        window.onload = resizeCanvas;
+        
+        // تخفيف الساعة عند الرسم
+        canvas.addEventListener('touchstart', () => {
+            document.getElementById('clockContainer').style.opacity = '0.25';
+        });
+        canvas.addEventListener('touchend', () => {
+            setTimeout(() => { document.getElementById('clockContainer').style.opacity = '1'; }, 800);
+        });
+        
+        // ========== التشغيل ==========
+        window.addEventListener('load', () => {
+            resizeCanvas();
+            connect();
+            resetHideTimer();
+            console.log('🎨 الصفحة جاهزة');
+        });
     </script>
 </body>
 </html>
