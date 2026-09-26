@@ -530,6 +530,9 @@ async def websocket_draw_room(websocket: WebSocket, code: str):
                 pass
         while True:
             data = await websocket.receive_json()
+            # تجاهل ping (يبقى الاتصال حياً فقط)
+            if data.get('type') == 'ping':
+                continue
             # بث للموجودين في نفس الغرفة فقط
             for client in room:
                 if client != websocket:

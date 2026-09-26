@@ -56,7 +56,17 @@
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const ws = new WebSocket(protocol + '//' + window.location.host + '/ws/draw/' + ROOM_CODE);
         
-        ws.onopen = function() { console.log('✅ متصل بالغرفة ' + ROOM_CODE); };
+        ws.onopen = function() { 
+            console.log('✅ WebSocket مفتوح - الغرفة: ' + ROOM_CODE);
+            console.log('URL: ' + ws.url);
+        };
+        ws.onerror = function(e) { 
+            console.error('❌ خطأ WebSocket:', e);
+            alert('خطأ في الاتصال. تحقق من الإنترنت.');
+        };
+        ws.onclose = function(e) { 
+            console.warn('⚠️ WebSocket مغلق. كود: ' + e.code + ' - السبب: ' + e.reason);
+        };
         ws.onmessage = function(e) {
             const data = JSON.parse(e.data);
             if (data.type === 'count') {
@@ -109,7 +119,7 @@
             ctx.lineTo(p.x, p.y);
             ctx.stroke();
             
-            if (ws.readyState === WebSocket.OPEN) {
+            console.log('📤 محاولة إرسال، الحالة: ' + ws.readyState); if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({
                     type: 'draw',
                     x1: lastX / canvas.width, y1: lastY / canvas.height,
@@ -142,7 +152,7 @@
             if (!confirm('مسح اللوحة بالكامل؟')) return;
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            if (broadcast && ws.readyState === WebSocket.OPEN) {
+            if (broadcast && ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ type: 'clear' }));
             }
         }
