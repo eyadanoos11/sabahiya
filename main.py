@@ -523,26 +523,34 @@ async def websocket_draw_room(websocket: WebSocket, code: str):
     room.add(websocket)
     try:
         # إخبار الجميع بعدد المتصلين
-        for client in room:
+        for client in list(room):
             try:
                 await client.send_json({"type": "count", "count": len(room)})
             except:
                 pass
+        import asyncio
+        last_heartbeat = asyncio.get_event_loop().time()
         while True:
-            data = await websocket.receive_json()
-            # تجاهل ping (يبقى الاتصال حياً فقط)
-            if data.get('type') == 'ping':
-                continue
-            # بث للموجودين في نفس الغرفة فقط
-            for client in room:
-                if client != websocket:
-                    try:
-                        await client.send_json(data)
-                    except:
-                        pass
+            try:
+                # انتظر رسالة بحد أقصى 30 ثانية
+                data = await asyncio.wait_for(websocket.receive_json(), timeout=30.0)
+                if data.get('type') == 'ping':
+                    continue
+                for client in list(room):
+                    if client != websocket:
+                        try:
+                            await client.send_json(data)
+                        except:
+                            pass
+            except asyncio.TimeoutError:
+                # إرسال heartbeat للحفاظ على الاتصال
+                try:
+                    await websocket.send_json({"type": "heartbeat"})
+                except:
+                    break
     except WebSocketDisconnect:
         room.discard(websocket)
-        for client in room:
+        for client in list(room):
             try:
                 await client.send_json({"type": "count", "count": len(room)})
             except:

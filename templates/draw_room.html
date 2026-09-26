@@ -67,6 +67,17 @@
         ws.onclose = function(e) { 
             console.warn('⚠️ WebSocket مغلق. كود: ' + e.code + ' - السبب: ' + e.reason);
         };
+        function drawRemote(data) {
+            ctx.strokeStyle = data.eraser ? 'white' : data.color;
+            ctx.lineWidth = data.size;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(data.x1 * canvas.width, data.y1 * canvas.height);
+            ctx.lineTo(data.x2 * canvas.width, data.y2 * canvas.height);
+            ctx.stroke();
+        }
+        
         ws.onmessage = function(e) {
             const data = JSON.parse(e.data);
             if (data.type === 'count') {
