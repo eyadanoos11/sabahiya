@@ -114,5 +114,17 @@
     "referral_balance": 0,
     "referrals": [],
     "referred_by": ""
+  },
+  "8979": {
+    "name": "مايا",
+    "country": "يتير",
+    "password": "b7e7dc515b3b66d43d2149e70a83d2203630d98658775e620841ea34e0feacca",
+    "is_admin": false,
+    "is_banned": false,
+    "forum_banned": false,
+    "referral_code": "8979FIO",
+    "referral_balance": 0,
+    "referrals": [],
+    "referred_by": ""
   }
 }
