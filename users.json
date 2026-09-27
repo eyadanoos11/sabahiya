@@ -54,5 +54,17 @@
     "referral_balance": 0,
     "referrals": [],
     "referred_by": ""
+  },
+  "9595": {
+    "name": "علاء",
+    "country": "ربرب",
+    "password": "2682c83fca2b4a9b302813ad4ab98f5d5417919352442c79dcea384a366ee25b",
+    "is_admin": false,
+    "is_banned": false,
+    "forum_banned": false,
+    "referral_code": "9595FAT",
+    "referral_balance": 0,
+    "referrals": [],
+    "referred_by": ""
   }
 }
