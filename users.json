@@ -18,5 +18,17 @@
     "referral_balance": 0,
     "referrals": [],
     "referred_by": ""
+  },
+  "098959": {
+    "name": "محمد",
+    "country": "سوطر",
+    "password": "9630dc32bfb438aef441c2fec9c3b80fa145a3d1b6dcea96a9b1f5071320bb30",
+    "is_admin": false,
+    "is_banned": false,
+    "forum_banned": false,
+    "referral_code": "8959BBQ",
+    "referral_balance": 0,
+    "referrals": [],
+    "referred_by": ""
   }
 }
