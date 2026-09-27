@@ -90,5 +90,17 @@
     "referral_balance": 0,
     "referrals": [],
     "referred_by": ""
+  },
+  "07997": {
+    "name": "مريم",
+    "country": "يرري",
+    "password": "f44ca53cc71732be09db723947dfe44848765a510be29824be37fda30b64fd67",
+    "is_admin": false,
+    "is_banned": false,
+    "forum_banned": false,
+    "referral_code": "7997SJB",
+    "referral_balance": 0,
+    "referrals": [],
+    "referred_by": ""
   }
 }
